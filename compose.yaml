@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  app:
+    image: spring-boot-app
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/hospital_01
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 0000
+    depends_on:
+      - db
+  db:
+    image: mysql:8
+    environment:
+      MYSQL_DATABASE: hospital_01
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 0000
+      MYSQL_ROOT_PASSWORD: 0000
+    ports:
+      - ":3306"
