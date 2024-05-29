@@ -1,18 +1,12 @@
 package lemon.hospitaltable.table.repositories;
-
 import lemon.hospitaltable.table.objects.Department;
-import java.util.List;
+import org.springframework.data.jdbc.repository.query.Modifying;
+import org.springframework.data.jdbc.repository.query.Query;
+import org.springframework.data.repository.CrudRepository;
 
-public interface DepartmentsRepositoryInterface {
+public interface DepartmentsRepositoryInterface extends CrudRepository<Department, Integer> {
 
-    void save(Department department);
-
-    void deleteById(int id);
-
-    Department findById(int id);
-
-    List<Department> findAll();
-
-    void setDepartmentName(int id, String name);
-
+    @Modifying
+    @Query("UPDATE departments SET name = :name WHERE id = :id")
+    void renameById(Integer id, String name);
 }
