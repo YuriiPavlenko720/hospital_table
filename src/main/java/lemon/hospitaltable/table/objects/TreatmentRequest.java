@@ -5,10 +5,10 @@ import java.sql.Date;
 
 @Getter
 public class TreatmentRequest {
-    private Integer patient_id;
-    private Integer doctor_id;
-    private Integer ward_id;
-    private Date date_in;
-    private Date date_out;
+    private Long patientId;
+    private Integer doctorId;
+    private Integer wardId;
+    private Date dateIn;
+    private Date dateOut;
     private String notation;
 }

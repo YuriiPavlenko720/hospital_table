@@ -33,7 +33,7 @@ CREATE TABLE `patients` (
 
 DROP TABLE IF EXISTS `wards`;
 CREATE TABLE `wards` (
-  `id` int NOT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
   `level` int DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `department_id` int DEFAULT NULL,
