@@ -4,10 +4,15 @@ import lemon.hospitaltable.table.objects.Treatment;
 import org.springframework.data.jdbc.repository.query.Modifying;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 import java.sql.Date;
 import java.util.List;
 
 public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment, Long> {
+
+    @Query("SELECT COUNT(*) FROM treatments WHERE ward_id = :wardId AND ((dateIn <= :date AND dateOut >= :date))")
+    Integer countTreatmentsOnDate(@Param("wardId") Integer roomId,
+                                  @Param("date") Date date);
 
     @Modifying
     @Query("UPDATE treatments SET patient_id = :patientId WHERE id = :id")
@@ -32,4 +37,10 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
     @Modifying
     @Query("UPDATE treatments SET notation = :notation WHERE id = :id")
     void changeNotationById(Long id, String notation);
+
+    List<Treatment> findByPatientId(Long patientId);
+
+    List<Treatment> findByDoctorId(Integer doctorId);
+
+    List<Treatment> findByWardId(Integer wardId);
 }
