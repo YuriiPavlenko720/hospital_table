@@ -37,7 +37,7 @@ CREATE TABLE `wards` (
   `level` int DEFAULT NULL,
   `name` varchar(255) DEFAULT NULL,
   `department_id` int DEFAULT NULL,
-  `capacity` int DEFAULT '0',
+  `capacity` int NOT NULL DEFAULT '0',
   `taken` int DEFAULT '0',
   `free` int DEFAULT NULL,
   PRIMARY KEY (`id`),

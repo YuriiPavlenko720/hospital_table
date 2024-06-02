@@ -10,6 +10,13 @@ import java.util.List;
 
 public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment, Long> {
 
+    @Query("SELECT COUNT(*) FROM treatments WHERE patient_id = :patientId AND " +
+            "((dateIn <= :dateOut AND dateOut >= :dateIn) AND id != :id)")
+    Integer countOvertreatmentsByCustomerId(@Param("customerId") Long customerId,
+                                            @Param("dateIn") Date dateIn,
+                                            @Param("dateOut") Date dateOut,
+                                            @Param("id") Long id);
+
     @Query("SELECT COUNT(*) FROM treatments WHERE ward_id = :wardId AND ((dateIn <= :date AND dateOut >= :date))")
     Integer countTreatmentsOnDate(@Param("wardId") Integer roomId,
                                   @Param("date") Date date);

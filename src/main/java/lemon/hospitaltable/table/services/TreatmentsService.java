@@ -23,10 +23,21 @@ public class TreatmentsService {
 
     public void save(Long patientId, Integer doctorId, Integer wardId, Date dateIn, Date dateOut, String notation) {
 
+        //checking order of dates
+        if (dateOut.before(dateIn)) {
+            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
+        }
+
+        //checking overtreatment
+        Integer overtreatment = treatmentsRepository.countOvertreatmentsByCustomerId(patientId, dateIn, dateOut, null);
+        if (overtreatment > 0) {
+            throw new IllegalArgumentException("This patient have already a treatment at these dates.");
+        }
+
         //getting capacity of ward
         Integer capacity = wardsRepository.getCapacityById(wardId);
         if (capacity == null) {
-            throw new IllegalArgumentException("Room not found");
+            throw new IllegalArgumentException("Ward not found.");
         }
 
         //checking taken less than capacity on each day of planned treatment
@@ -37,7 +48,7 @@ public class TreatmentsService {
             taken = (taken == null) ? 0 : taken;
 
             if (taken >= capacity) {
-                throw new IllegalArgumentException("Not enough available place in the ward for the specified dates.");
+                throw new IllegalArgumentException("Not enough available places in the ward for the specified dates.");
             }
 
             calendar.add(Calendar.DAY_OF_MONTH, 1);
@@ -61,15 +72,104 @@ public class TreatmentsService {
     }
 
     public void changeWardIdById(Long id, Integer wardId) {
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment not found."));
+
+        //getting capacity of new ward
+        Integer capacity = wardsRepository.getCapacityById(wardId);
+        if (capacity == null) {
+            throw new IllegalArgumentException("Ward not found.");
+        }
+
+        //checking taken less than capacity on each day of planned treatment in new ward
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(treatment.dateIn());
+        while (!calendar.getTime().after(treatment.dateOut())) {
+            checkingCapacity(treatment, capacity, calendar);
+        }
+
+        //setting new ward
         treatmentsRepository.changeWardIdById(id, wardId);
     }
 
-    public void changeDateInById(Long id, Date dateIn) {
-        treatmentsRepository.changeDateInById(id, dateIn);
+    public void changeDateInById(Long id, Date newDateIn) {
+        //getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment not found."));
+
+        //checking order of dates
+        if (treatment.dateOut().before(newDateIn)) {
+            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
+        }
+
+        //checking overtreatment
+        Integer overtreatment = treatmentsRepository.countOvertreatmentsByCustomerId(
+                treatment.patientId(), newDateIn, treatment.dateOut(), id);
+        if (overtreatment > 0) {
+            throw new IllegalArgumentException("This patient have already a treatment at these dates.");
+        }
+
+        //getting capacity of ward
+        Integer capacity = wardsRepository.getCapacityById(treatment.wardId());
+        if (capacity == null) {
+            throw new IllegalArgumentException("Ward not found.");
+        }
+
+        //checking taken less than capacity on each day of planned extension
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(newDateIn);
+        while (!calendar.getTime().after(treatment.dateIn())) {
+            checkingCapacity(treatment, capacity, calendar);
+        }
+
+        //setting new dateIn
+        treatmentsRepository.changeDateInById(id, newDateIn);
     }
 
-    public void changeDateOutById(Long id, Date dateOut) {
-        treatmentsRepository.changeDateOutById(id, dateOut);
+    public void changeDateOutById(Long id, Date newDateOut) {
+        //getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment not found."));
+
+        //checking order of dates
+        if (newDateOut.before(treatment.dateIn())) {
+            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
+        }
+
+        //checking overtreatment
+        Integer overtreatment = treatmentsRepository.countOvertreatmentsByCustomerId(
+                treatment.patientId(), treatment.dateIn(), newDateOut, id);
+        if (overtreatment > 0) {
+            throw new IllegalArgumentException("This patient have already a treatment at these dates.");
+        }
+
+        //getting capacity of ward
+        Integer capacity = wardsRepository.getCapacityById(treatment.wardId());
+        if (capacity == null) {
+            throw new IllegalArgumentException("Ward not found.");
+        }
+
+        //checking taken less than capacity on each day of planned extension
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(treatment.dateOut());
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        while (!calendar.getTime().after(newDateOut)) {
+            checkingCapacity(treatment, capacity, calendar);
+        }
+
+        //setting new dateOut
+        treatmentsRepository.changeDateOutById(id, newDateOut);
+    }
+
+    private void checkingCapacity(Treatment treatment, Integer capacity, Calendar calendar) {
+        Integer taken = treatmentsRepository.countTreatmentsOnDate(treatment.wardId(), new Date(calendar.getTimeInMillis()));
+        taken = (taken == null) ? 0 : taken;
+
+        if (taken >= capacity) {
+            throw new IllegalArgumentException("Not enough available places in the ward for the new dates.");
+        }
+
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
     }
 
     public void changeNotationById(Long id, String notation) {
