@@ -1,11 +1,14 @@
 package lemon.hospitaltable.table.controllers;
 
+import lemon.hospitaltable.table.objects.DepartmentsOccupancyStats;
 import lemon.hospitaltable.table.objects.Ward;
 import lemon.hospitaltable.table.objects.WardRequest;
 import lemon.hospitaltable.table.services.WardsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import java.sql.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -81,5 +84,11 @@ public class WardsController {
     @GetMapping("/api/wards/show_by_department/{departmentId}")
     public List<Ward> findByDepartmentId(@PathVariable Integer departmentId) {
         return wardsService.findByDepartmentId(departmentId);
+    }
+
+    @GetMapping("/api/wards-occupancy")
+    public Map<Integer, DepartmentsOccupancyStats> getWardsOccupancyStats(
+            @RequestParam("date") Date date) {
+        return wardsService.getWardsOccupancyStats(date);
     }
 }

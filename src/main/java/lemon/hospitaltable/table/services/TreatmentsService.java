@@ -29,7 +29,7 @@ public class TreatmentsService {
         }
 
         //checking overtreatment
-        Integer overtreatment = treatmentsRepository.countOvertreatmentsByCustomerId(patientId, dateIn, dateOut, null);
+        Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(patientId, dateIn, dateOut, null);
         if (overtreatment > 0) {
             throw new IllegalArgumentException("This patient have already a treatment at these dates.");
         }
@@ -44,7 +44,7 @@ public class TreatmentsService {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(dateIn);
         while (!calendar.getTime().after(dateOut)) {
-            Integer taken = treatmentsRepository.countTreatmentsOnDate(wardId, new Date(calendar.getTimeInMillis()));
+            Integer taken = treatmentsRepository.countTreatmentsInWardOnDate(wardId, new Date(calendar.getTimeInMillis()));
             taken = (taken == null) ? 0 : taken;
 
             if (taken >= capacity) {
@@ -57,18 +57,23 @@ public class TreatmentsService {
         //creating treatment
         Treatment treatment = new Treatment(null, patientId, doctorId, wardId, dateIn, dateOut, notation);
         treatmentsRepository.save(treatment);
+        //DOCTOR NOTICE?
     }
 
     public void deleteById(Long id) {
         treatmentsRepository.deleteById(id);
+        //DOCTOR NOTICE?
     }
 
     public void changePatientIdById(Long id, Long patientId) {
         treatmentsRepository.changePatientIdById(id, patientId);
+        //DOCTOR NOTICE?
     }
 
     public void changeDoctorIdById(Long id, Integer doctorId) {
         treatmentsRepository.changeDoctorIdById(id, doctorId);
+        //DOCTOR NOTICE?
+        //DOCTOR NOTICE?
     }
 
     public void changeWardIdById(Long id, Integer wardId) {
@@ -90,6 +95,7 @@ public class TreatmentsService {
 
         //setting new ward
         treatmentsRepository.changeWardIdById(id, wardId);
+        //DOCTOR NOTICE?
     }
 
     public void changeDateInById(Long id, Date newDateIn) {
@@ -103,7 +109,7 @@ public class TreatmentsService {
         }
 
         //checking overtreatment
-        Integer overtreatment = treatmentsRepository.countOvertreatmentsByCustomerId(
+        Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(
                 treatment.patientId(), newDateIn, treatment.dateOut(), id);
         if (overtreatment > 0) {
             throw new IllegalArgumentException("This patient have already a treatment at these dates.");
@@ -124,6 +130,7 @@ public class TreatmentsService {
 
         //setting new dateIn
         treatmentsRepository.changeDateInById(id, newDateIn);
+        //DOCTOR NOTICE?
     }
 
     public void changeDateOutById(Long id, Date newDateOut) {
@@ -137,7 +144,7 @@ public class TreatmentsService {
         }
 
         //checking overtreatment
-        Integer overtreatment = treatmentsRepository.countOvertreatmentsByCustomerId(
+        Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(
                 treatment.patientId(), treatment.dateIn(), newDateOut, id);
         if (overtreatment > 0) {
             throw new IllegalArgumentException("This patient have already a treatment at these dates.");
@@ -159,10 +166,11 @@ public class TreatmentsService {
 
         //setting new dateOut
         treatmentsRepository.changeDateOutById(id, newDateOut);
+        //DOCTOR NOTICE?
     }
 
     private void checkingCapacity(Treatment treatment, Integer capacity, Calendar calendar) {
-        Integer taken = treatmentsRepository.countTreatmentsOnDate(treatment.wardId(), new Date(calendar.getTimeInMillis()));
+        Integer taken = treatmentsRepository.countTreatmentsInWardOnDate(treatment.wardId(), new Date(calendar.getTimeInMillis()));
         taken = (taken == null) ? 0 : taken;
 
         if (taken >= capacity) {
@@ -174,6 +182,7 @@ public class TreatmentsService {
 
     public void changeNotationById(Long id, String notation) {
         treatmentsRepository.changeNotationById(id, notation);
+        //DOCTOR NOTICE?
     }
 
     public Optional<Treatment> findById(Long id) {

@@ -1,7 +1,9 @@
 package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.objects.Doctor;
+import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
+import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.sql.Date;
@@ -11,10 +13,12 @@ import java.util.Optional;
 @Service
 public class DoctorsService {
     private final DoctorsRepositoryInterface doctorsRepository;
+    private final TreatmentsRepositoryInterface treatmentsRepository;
 
     @Autowired
-    public DoctorsService(DoctorsRepositoryInterface doctorsRepository) {
+    public DoctorsService(DoctorsRepositoryInterface doctorsRepository, TreatmentsRepositoryInterface treatmentsRepository) {
         this.doctorsRepository = doctorsRepository;
+        this.treatmentsRepository = treatmentsRepository;
     }
 
     public void save(String name, Date birth, String position, Integer departmentId) {
@@ -23,6 +27,19 @@ public class DoctorsService {
     }
 
     public void deleteById(Integer id) {
+        //checking existing of the aim doctor
+        Doctor doctor = doctorsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found."));
+
+        //checking treatments existing at the aim doctor
+        List<Treatment> treatments = treatmentsRepository.findByDoctorId(id);
+        for (Treatment treatment : treatments) {
+            if (treatment.dateOut().after(new Date(System.currentTimeMillis()))) {
+                throw new IllegalArgumentException("Cannot delete doctor with active or planned treatments at the doctor.");
+            }
+        }
+
+        //deleting of the aim doctor
         doctorsRepository.deleteById(id);
     }
 
@@ -39,6 +56,19 @@ public class DoctorsService {
     }
 
     public void changeDepartmentById(Integer id, Integer departmentId) {
+        //checking existing of the aim doctor
+        Doctor doctor = doctorsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor not found."));
+
+        //checking treatments existing at the aim doctor
+        List<Treatment> treatments = treatmentsRepository.findByDoctorId(id);
+        for (Treatment treatment : treatments) {
+            if (treatment.dateOut().after(new Date(System.currentTimeMillis()))) {
+                throw new IllegalArgumentException("Cannot change department of doctor with active or planned treatments at the doctor.");
+            }
+        }
+
+        //changing department of the aim doctor
         doctorsRepository.changeDepartmentById(id, departmentId);
     }
 
