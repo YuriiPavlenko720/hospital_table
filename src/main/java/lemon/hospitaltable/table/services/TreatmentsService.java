@@ -5,6 +5,8 @@ import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.WardsRepositoryInterface;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.sql.Date;
 import java.util.Calendar;
 import java.util.List;
@@ -183,6 +185,21 @@ public class TreatmentsService {
     public void changeNotationById(Long id, String notation) {
         treatmentsRepository.changeNotationById(id, notation);
         //DOCTOR NOTICE?
+    }
+
+    @Transactional
+    public Integer getTreatmentsStats(Date startDate, Date endDate) {
+        return treatmentsRepository.countTreatmentsEndingBetween(startDate, endDate);
+    }
+
+    @Transactional
+    public Integer getTreatmentsStatsByDoctorId(Integer doctorId, Date startDate, Date endDate) {
+        return treatmentsRepository.countTreatmentsEndingBetweenByDoctorId(doctorId, startDate, endDate);
+    }
+
+    @Transactional
+    public Integer getTreatmentsStatsByDepartmentId(Integer departmentId, Date startDate, Date endDate) {
+        return treatmentsRepository.countTreatmentsEndingBetweenByDepartmentId(departmentId, startDate, endDate);
     }
 
     public Optional<Treatment> findById(Long id) {

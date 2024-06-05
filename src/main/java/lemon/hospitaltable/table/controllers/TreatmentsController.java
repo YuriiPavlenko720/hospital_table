@@ -60,6 +60,27 @@ public class TreatmentsController {
         treatmentsService.changeNotationById(id, notation);
     }
 
+    @GetMapping("/api/treatments/stats")
+    public Integer getTreatmentsStats(@RequestParam("startDate") Date startDate, @RequestParam("endDate") Date endDate) {
+        return treatmentsService.getTreatmentsStats(startDate, endDate);
+    }
+
+    @GetMapping("/api/treatments/stats_by_doctor")
+    public Integer getTreatmentsStatsByDoctorId(
+            @RequestParam("doctorId") Integer doctorId,
+            @RequestParam("startDate") Date startDate,
+            @RequestParam("endDate") Date endDate) {
+        return treatmentsService.getTreatmentsStatsByDoctorId(doctorId, startDate, endDate);
+    }
+
+    @GetMapping("/api/treatments/stats_by_department")
+    public Integer getTreatmentsStatsByDepartmentId(
+            @RequestParam("departmentId") Integer departmentId,
+            @RequestParam("startDate") Date startDate,
+            @RequestParam("endDate") Date endDate) {
+        return treatmentsService.getTreatmentsStatsByDepartmentId(departmentId, startDate, endDate);
+    }
+
     @GetMapping("/api/treatments/{id}")
     public Optional<Treatment> getTreatment(@PathVariable Long id) {
         return treatmentsService.findById(id);
