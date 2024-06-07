@@ -1,39 +1,43 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Department;
-import lemon.hospitaltable.table.objects.DepartmentRequest;
 import lemon.hospitaltable.table.services.DepartmentsService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import lombok.AllArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @RestController
+@RequestMapping("/api/departments")
 public class DepartmentsController {
 
     private final DepartmentsService departmentsService;
 
-    @Autowired
-    public DepartmentsController(DepartmentsService departmentsService) {
-        this.departmentsService = departmentsService;
-    }
+    public record DepartmentRequest(String name) { }
 
-    @PostMapping("/api/departments")
+    @PostMapping
     public void createDepartment (@RequestBody DepartmentRequest departmentRequest) {
-        departmentsService.save(departmentRequest.getName());
+        departmentsService.save(departmentRequest.name());
     }
 
-    @PostMapping("/api/departments/delete/{id}")
+    @PostMapping("/delete/{id}")
     public void deleteById (@PathVariable Integer id) {
         departmentsService.deleteById(id);
     }
 
-    @PostMapping("/api/departments/rename/{id}")
+    @PostMapping("/rename/{id}")
     public void renameById (@PathVariable Integer id, String name) {
         departmentsService.renameById(id, name);
     }
 
-    @GetMapping("/api/departments/{id}")
+    @GetMapping("/{id}")
     public Optional<Department> getDepartment (@PathVariable Integer id) {
         return departmentsService.findById(id);
     }

@@ -51,8 +51,22 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
     @Query("SELECT COUNT(*) FROM treatments WHERE doctor_id = :doctorId AND dateOut BETWEEN :startDate AND :endDate")
     Integer countTreatmentsEndingBetweenByDoctorId(@Param("doctorId") Integer doctorId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
 
-    @Query("SELECT COUNT(*) FROM treatments JOIN wards ON treatments.ward_id = wards.id WHERE wards.department_id = :departmentId AND treatments.dateOut BETWEEN :startDate AND :endDate")
-    Integer countTreatmentsEndingBetweenByDepartmentId(@Param("departmentId") Integer departmentId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
+    @Query("""
+            SELECT 
+                COUNT(*) 
+            FROM 
+                     treatments 
+                JOIN wards 
+                    ON treatments.ward_id = wards.id 
+            WHERE 
+                    wards.department_id = :departmentId 
+                AND treatments.dateOut BETWEEN :startDate AND :endDate
+            """)
+    Integer countTreatmentsEndingBetweenByDepartmentId(
+            @Param("departmentId") Integer departmentId,
+            @Param("startDate") Date startDate,
+            @Param("endDate") Date endDate
+    );
 
     List<Treatment> findByPatientId(Long patientId);
 

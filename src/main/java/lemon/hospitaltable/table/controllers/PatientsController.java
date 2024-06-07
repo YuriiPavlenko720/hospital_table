@@ -21,9 +21,7 @@ public class PatientsController {
 
     @PostMapping("/api/patients")
     public void addPatient(@RequestBody PatientRequest patientRequest) {
-        patientsService.save(patientRequest.getName(), patientRequest.getBirth(),
-                patientRequest.getAddress(), patientRequest.getStatus(),
-                patientRequest.getNotation());
+        patientsService.save(patientRequest);
     }
 
     @PostMapping("/api/patients/delete/{id}")

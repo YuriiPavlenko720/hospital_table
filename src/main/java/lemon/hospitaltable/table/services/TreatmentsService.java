@@ -1,8 +1,10 @@
 package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.TreatmentRequest;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.WardsRepositoryInterface;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,23 +14,16 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @Service
 public class TreatmentsService {
+
     private final TreatmentsRepositoryInterface treatmentsRepository;
     private final WardsRepositoryInterface wardsRepository;
 
-    @Autowired
-    public TreatmentsService(TreatmentsRepositoryInterface treatmentsRepository, WardsRepositoryInterface wardsRepository) {
-        this.treatmentsRepository = treatmentsRepository;
-        this.wardsRepository = wardsRepository;
-    }
+    public void save(TreatmentRequest treatmentRequest) {
 
-    public void save(Long patientId, Integer doctorId, Integer wardId, Date dateIn, Date dateOut, String notation) {
-
-        //checking order of dates
-        if (dateOut.before(dateIn)) {
-            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
-        }
+        treatmentRequest.validate();
 
         //checking overtreatment
         Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(patientId, dateIn, dateOut, null);
@@ -57,8 +52,7 @@ public class TreatmentsService {
         }
 
         //creating treatment
-        Treatment treatment = new Treatment(null, patientId, doctorId, wardId, dateIn, dateOut, notation);
-        treatmentsRepository.save(treatment);
+        treatmentsRepository.save(Treatment.fromRequest(treatmentRequest));
         //DOCTOR NOTICE?
     }
 

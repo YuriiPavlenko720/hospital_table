@@ -1,35 +1,40 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.objects.Doctor;
 import lemon.hospitaltable.table.objects.Patient;
+import lemon.hospitaltable.table.objects.PatientRequest;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import java.sql.Date;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @Service
 public class PatientsService {
+
     private final PatientsRepositoryInterface patientsRepository;
     private final TreatmentsRepositoryInterface treatmentsRepository;
 
-    @Autowired
-    public PatientsService(PatientsRepositoryInterface patientsRepository, TreatmentsRepositoryInterface treatmentsRepository) {
-        this.patientsRepository = patientsRepository;
-        this.treatmentsRepository = treatmentsRepository;
-    }
-
-    public void save(String name, Date birth, String address, String status, String notation) {
-        Patient patient = new Patient(null, name, birth, address, status, notation);
-        patientsRepository.save(patient);
+    public void save(PatientRequest patientRequest) {
+        patientsRepository.save(
+                new Patient(
+                        null,
+                        patientRequest.getName(),
+                        patientRequest.getBirth(),
+                        patientRequest.getAddress(),
+                        patientRequest.getStatus(),
+                        patientRequest.getNotation()
+                )
+        );
     }
 
     public void deleteById(Long id) {
         //checking existing of the aim patient
-        Patient patient = patientsRepository.findById(id)
+        patientsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Patient not found."));
 
         //checking treatments existing with the aim patient

@@ -28,7 +28,7 @@ public class DoctorsService {
 
     public void deleteById(Integer id) {
         //checking existing of the aim doctor
-        Doctor doctor = doctorsRepository.findById(id)
+        doctorsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found."));
 
         //checking treatments existing at the aim doctor
@@ -57,7 +57,7 @@ public class DoctorsService {
 
     public void changeDepartmentById(Integer id, Integer departmentId) {
         //checking existing of the aim doctor
-        Doctor doctor = doctorsRepository.findById(id)
+        doctorsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Doctor not found."));
 
         //checking treatments existing at the aim doctor
