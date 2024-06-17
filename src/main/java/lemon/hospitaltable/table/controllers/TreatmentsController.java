@@ -1,108 +1,196 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Treatment;
-import lemon.hospitaltable.table.objects.TreatmentRequest;
 import lemon.hospitaltable.table.services.TreatmentsService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import java.sql.Date;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @RestController
+@RequestMapping("/api/treatments")
 public class TreatmentsController {
+
     private final TreatmentsService treatmentsService;
 
-    @Autowired
-    public TreatmentsController(TreatmentsService treatmentsService) {
-        this.treatmentsService = treatmentsService;
+    public record TreatmentRequest(
+            Long patientId,
+            Integer doctorId,
+            Integer wardId,
+            LocalDate dateIn,
+            LocalDate dateOut,
+            String notation
+    ) {
     }
 
-    @PostMapping("/api/treatments")
+    @PostMapping
     public void addTreatment(@RequestBody TreatmentRequest treatmentRequest) {
-        treatmentsService.save(treatmentRequest.getPatientId(), treatmentRequest.getDoctorId(),
-                treatmentRequest.getWardId(), treatmentRequest.getDateIn(),
-                treatmentRequest.getDateOut(), treatmentRequest.getNotation());
+        treatmentsService.save(treatmentRequest);
     }
 
-    @PostMapping("/api/treatments/delete/{id}")
+    @PostMapping("/{id}/delete")
     public void deleteById(@PathVariable Long id) {
         treatmentsService.deleteById(id);
     }
 
-    @PostMapping("/api/treatments/change_patientId/{id}")
-    public void changePatientIdById(@PathVariable Long id, Long patientId) {
-        treatmentsService.changePatientIdById(id, patientId);
+    @PostMapping("/{id}/change_patient_id")
+    public void changePatientIdById(@PathVariable Long id, Long newPatientId) {
+        treatmentsService.changePatientIdById(id, newPatientId);
     }
 
-    @PostMapping("/api/treatments/change_doctorId/{id}")
-    public void changeDoctorIdById(@PathVariable Long id, Integer doctorId) {
-        treatmentsService.changeDoctorIdById(id, doctorId);
+    @PostMapping("/{id}/change_doctor_id")
+    public void changeDoctorIdById(@PathVariable Long id, Integer newDoctorId) {
+        treatmentsService.changeDoctorIdById(id, newDoctorId);
     }
 
-    @PostMapping("/api/treatments/change_wardId/{id}")
-    public void changeWardIdById(@PathVariable Long id, Integer wardId) {
-        treatmentsService.changeWardIdById(id, wardId);
+    @PostMapping("/{id}/change_ward_id")
+    public void changeWardIdById(@PathVariable Long id, Integer newWardId) {
+        treatmentsService.changeWardIdById(id, newWardId);
     }
 
-    @PostMapping("/api/treatments/change_dateIn/{id}")
-    public void changeDateInById(@PathVariable Long id, Date dateIn) {
-        treatmentsService.changeDateInById(id, dateIn);
+    @PostMapping("/{id}/change_date_in")
+    public void changeDateInById(@PathVariable Long id, LocalDate newDateIn) {
+        treatmentsService.changeDateInById(id, newDateIn);
     }
 
-    @PostMapping("/api/treatments/change_dateOut/{id}")
-    public void changeDateOutById(@PathVariable Long id, Date dateOut) {
-        treatmentsService.changeDateOutById(id, dateOut);
+    @PostMapping("/{id}/change_date_out")
+    public void changeDateOutById(@PathVariable Long id, LocalDate newDateOut) {
+        treatmentsService.changeDateOutById(id, newDateOut);
     }
 
-    @PostMapping("/api/treatments/change_notation/{id}")
-    public void changeNotationById(@PathVariable Long id, String notation) {
-        treatmentsService.changeNotationById(id, notation);
+    @PostMapping("/{id}/change_notation")
+    public void changeNotationById(@PathVariable Long id, String newNotation) {
+        treatmentsService.changeNotationById(id, newNotation);
     }
 
-    @GetMapping("/api/treatments/stats")
-    public Integer getTreatmentsStats(@RequestParam("startDate") Date startDate, @RequestParam("endDate") Date endDate) {
-        return treatmentsService.getTreatmentsStats(startDate, endDate);
+    @GetMapping("/stats")
+    public ResponseEntity<ByteArrayResource> getTreatmentsStats(
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate
+    ) {
+        List<TreatmentStats> stats = treatmentsService.getTreatmentsStatsByDepartments(startDate, endDate);
+        Integer totalTreatments = treatmentsService.countTreatmentsStats(startDate, endDate);
+
+        StringWriter writer = new StringWriter();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                .setHeader("DepartmentId", "Count")
+                .build();
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
+            for (TreatmentStats stat : stats) {
+                csvPrinter.printRecord(stat.departmentId, stat.count);
+            }
+            csvPrinter.printRecord("Total", totalTreatments);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(writer.toString().getBytes());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"treating_stats.csv\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(resource);
     }
 
-    @GetMapping("/api/treatments/stats_by_doctor")
-    public Integer getTreatmentsStatsByDoctorId(
+    public record TreatmentStats(Integer departmentId, Integer count) {
+    }
+
+    @GetMapping("/stats_by_doctor")
+    public ResponseEntity<ByteArrayResource> countTreatmentsStatsByDoctorId(
             @RequestParam("doctorId") Integer doctorId,
-            @RequestParam("startDate") Date startDate,
-            @RequestParam("endDate") Date endDate) {
-        return treatmentsService.getTreatmentsStatsByDoctorId(doctorId, startDate, endDate);
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate
+    ) {
+        Integer count = treatmentsService.countTreatmentsStatsByDoctorId(
+                doctorId,
+                startDate,
+                endDate
+        );
+
+        StringWriter writer = new StringWriter();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                .setHeader("Doctor", "Count")
+                .build();
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
+            csvPrinter.printRecord(doctorId, count);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(writer.toString().getBytes());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"doctor_treating_stats.csv\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(resource);
     }
 
-    @GetMapping("/api/treatments/stats_by_department")
-    public Integer getTreatmentsStatsByDepartmentId(
+    @GetMapping("/stats_by_department")
+    public ResponseEntity<ByteArrayResource> countTreatmentsStatsByDepartmentId(
             @RequestParam("departmentId") Integer departmentId,
-            @RequestParam("startDate") Date startDate,
-            @RequestParam("endDate") Date endDate) {
-        return treatmentsService.getTreatmentsStatsByDepartmentId(departmentId, startDate, endDate);
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate
+    ) {
+        Integer count = treatmentsService.countTreatmentsStatsByDepartmentId(
+                departmentId,
+                startDate,
+                endDate
+        );
+
+        StringWriter writer = new StringWriter();
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                .setHeader("Department", "Count")
+                .build();
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
+            csvPrinter.printRecord(departmentId, count);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        ByteArrayResource resource = new ByteArrayResource(writer.toString().getBytes());
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"department_treating_stats.csv\"")
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(resource);
     }
 
-    @GetMapping("/api/treatments/{id}")
+    @GetMapping("/{id}")
     public Optional<Treatment> getTreatment(@PathVariable Long id) {
         return treatmentsService.findById(id);
     }
 
-    @GetMapping("/api/treatments/")
+    @GetMapping
     public List<Treatment> findAll() {
         return treatmentsService.findAll();
     }
 
-    @GetMapping("/api/treatments/find_by_patient_id/{patientId}")
-    public List<Treatment> findByPatientId(@PathVariable Long patientId) {
+    @GetMapping("/find_by_patient")
+    public List<Treatment> findByPatientId(@RequestParam Long patientId) {
         return treatmentsService.findByPatientId(patientId);
     }
 
-    @GetMapping("/api/treatments/find_by_doctor_id/{doctorId}")
-    public List<Treatment> findByDoctorId(@PathVariable Integer doctorId) {
+    @GetMapping("/find_by_doctor")
+    public List<Treatment> findByDoctorId(@RequestParam Integer doctorId) {
         return treatmentsService.findByDoctorId(doctorId);
     }
 
-    @GetMapping("/api/treatments/find_by_ward_id/{wardId}")
-    public List<Treatment> findByWardId(@PathVariable Integer wardId) {
+    @GetMapping("/find_by_ward")
+    public List<Treatment> findByWardId(@RequestParam Integer wardId) {
         return treatmentsService.findByWardId(wardId);
     }
 }

@@ -1,42 +1,50 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.objects.Doctor;
+import lemon.hospitaltable.table.controllers.PatientsController;
 import lemon.hospitaltable.table.objects.Patient;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import java.sql.Date;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @Service
 public class PatientsService {
+
     private final PatientsRepositoryInterface patientsRepository;
     private final TreatmentsRepositoryInterface treatmentsRepository;
 
-    @Autowired
-    public PatientsService(PatientsRepositoryInterface patientsRepository, TreatmentsRepositoryInterface treatmentsRepository) {
-        this.patientsRepository = patientsRepository;
-        this.treatmentsRepository = treatmentsRepository;
+
+    public void save(PatientsController.PatientRequest patientRequest) {
+        patientsRepository.save(new Patient(
+                null,
+                patientRequest.name(),
+                patientRequest.birth(),
+                patientRequest.address(),
+                patientRequest.email(),
+                patientRequest.status(),
+                patientRequest.notation()
+        ));
     }
 
-    public void save(String name, Date birth, String address, String status, String notation) {
-        Patient patient = new Patient(null, name, birth, address, status, notation);
-        patientsRepository.save(patient);
-    }
 
     public void deleteById(Long id) {
-        //checking existing of the aim patient
+        //checking existence of the aim patient
         Patient patient = patientsRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Patient not found."));
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
 
-        //checking treatments existing with the aim patient
+        //checking existence of treatments with the aim patient
         List<Treatment> treatments = treatmentsRepository.findByPatientId(id);
         for (Treatment treatment : treatments) {
-            if (treatment.dateOut().after(new Date(System.currentTimeMillis()))) {
-                throw new IllegalArgumentException("Cannot delete patient with active or planned treatments.");
+            if (treatment.dateOut().isAfter(LocalDate.now())) {
+                throw new IllegalArgumentException(
+                        "Cannot delete patient with active or planned treatments \n" +
+                                treatments
+                );
             }
         }
 
@@ -44,37 +52,63 @@ public class PatientsService {
         patientsRepository.deleteById(id);
     }
 
-    public void renameById(Long id, String name) {
-        patientsRepository.renameById(id, name);
+
+    public void renameById(Long id, String newName) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withName(newName));
     }
 
-    public void changeBirthById(Long id, Date birth) {
-        patientsRepository.changeBirthById(id, birth);
+
+    public void changeBirthById(Long id, LocalDate newBirth) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withBirth(newBirth));
     }
 
-    public void changeAddressById(Long id, String address) {
-        patientsRepository.changeAddressById(id, address);
+
+    public void changeAddressById(Long id, String newAddress) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withAddress(newAddress));
     }
 
-    public void changeStatusById(Long id, String status) {
-        patientsRepository.changeStatusById(id, status);
+
+    public void changeEmailById(Long id, String newEmail) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withEmail(newEmail));
     }
 
-    public void changeNotationById(Long id, String notation) {
-        patientsRepository.changeNotationById(id, notation);
+
+    public void changeStatusById(Long id, String newStatus) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withStatus(newStatus));
     }
+
+
+    public void changeNotationById(Long id, String newNotation) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withNotation(newNotation));
+    }
+
 
     public Optional<Patient> findById(Long id) {
         return patientsRepository.findById(id);
     }
 
+
     public List<Patient> findAll() {
         return (List<Patient>) patientsRepository.findAll();
     }
 
+
     public List<Patient> findByName(String name) {
         return patientsRepository.findByName(name);
     }
+
 
     public List<Patient> findByStatus(String status) {
         return patientsRepository.findByStatus(status);

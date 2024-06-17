@@ -1,44 +1,43 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Department;
-import lemon.hospitaltable.table.objects.DepartmentRequest;
 import lemon.hospitaltable.table.services.DepartmentsService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@AllArgsConstructor
 @RestController
+@RequestMapping("/api/departments")
 public class DepartmentsController {
 
     private final DepartmentsService departmentsService;
 
-    @Autowired
-    public DepartmentsController(DepartmentsService departmentsService) {
-        this.departmentsService = departmentsService;
+    public record DepartmentRequest(String name) {
     }
 
-    @PostMapping("/api/departments")
+    @PostMapping
     public void createDepartment (@RequestBody DepartmentRequest departmentRequest) {
-        departmentsService.save(departmentRequest.getName());
+        departmentsService.save(departmentRequest);
     }
 
-    @PostMapping("/api/departments/delete/{id}")
+    @PostMapping("/{id}/delete")
     public void deleteById (@PathVariable Integer id) {
         departmentsService.deleteById(id);
     }
 
-    @PostMapping("/api/departments/rename/{id}")
-    public void renameById (@PathVariable Integer id, String name) {
-        departmentsService.renameById(id, name);
+    @PostMapping("/{id}/rename")
+    public void renameById (@PathVariable Integer id, String newName) {
+        departmentsService.renameById(id, newName);
     }
 
-    @GetMapping("/api/departments/{id}")
+    @GetMapping("/{id}")
     public Optional<Department> getDepartment (@PathVariable Integer id) {
         return departmentsService.findById(id);
     }
 
-    @GetMapping("/api/departments/")
+    @GetMapping
     public List<Department> findAll() {
         return departmentsService.findAll();
     }

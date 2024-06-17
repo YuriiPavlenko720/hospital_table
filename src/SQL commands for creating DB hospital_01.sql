@@ -15,6 +15,7 @@ CREATE TABLE `doctors` (
   `birth` date DEFAULT NULL,
   `position` varchar(255) DEFAULT NULL,
   `department_id` int DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `doc_department_id_idx` (`department_id`),
   CONSTRAINT `doc_department_id` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL
@@ -26,6 +27,7 @@ CREATE TABLE `patients` (
   `name` varchar(255) DEFAULT NULL,
   `birth` date DEFAULT NULL,
   `address` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   `status` varchar(255) DEFAULT NULL,
   `notation` varchar(2000) DEFAULT NULL,
   PRIMARY KEY (`id`)
@@ -38,8 +40,6 @@ CREATE TABLE `wards` (
   `name` varchar(255) DEFAULT NULL,
   `department_id` int DEFAULT NULL,
   `capacity` int NOT NULL DEFAULT '0',
-  `taken` int DEFAULT '0',
-  `free` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `department_id_idx` (`department_id`),
   CONSTRAINT `ward_department_id` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL
@@ -51,8 +51,8 @@ CREATE TABLE `treatments` (
   `patient_id` int DEFAULT NULL,
   `doctor_id` int DEFAULT NULL,
   `ward_id` int DEFAULT NULL,
-  `dateIn` date DEFAULT NULL,
-  `dateOut` date DEFAULT NULL,
+  `date_in` date DEFAULT NULL,
+  `date_out` date DEFAULT NULL,
   `notation` varchar(2000) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `treat_doctor_id_idx` (`doctor_id`),

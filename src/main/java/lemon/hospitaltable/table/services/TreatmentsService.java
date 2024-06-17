@@ -1,222 +1,334 @@
 package lemon.hospitaltable.table.services;
 
+import lemon.hospitaltable.table.controllers.TreatmentsController;
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
+import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.WardsRepositoryInterface;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.sql.Date;
-import java.util.Calendar;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
+@AllArgsConstructor
 @Service
 public class TreatmentsService {
-    private final TreatmentsRepositoryInterface treatmentsRepository;
-    private final WardsRepositoryInterface wardsRepository;
 
-    @Autowired
-    public TreatmentsService(TreatmentsRepositoryInterface treatmentsRepository, WardsRepositoryInterface wardsRepository) {
-        this.treatmentsRepository = treatmentsRepository;
-        this.wardsRepository = wardsRepository;
+    private final TreatmentsRepositoryInterface treatmentsRepository;
+    private final PatientsRepositoryInterface patientsRepository;
+    private final DoctorsRepositoryInterface doctorsRepository;
+    private final WardsRepositoryInterface wardsRepository;
+    private final NotificationService notificationService;
+
+
+    public void save(TreatmentsController.TreatmentRequest treatmentRequest) {
+
+        //creating treatment for validation
+        Treatment treatment = new Treatment(
+                null,
+                treatmentRequest.patientId(),
+                treatmentRequest.doctorId(),
+                treatmentRequest.wardId(),
+                treatmentRequest.dateIn(),
+                treatmentRequest.dateOut(),
+                treatmentRequest.notation()
+        );
+
+        //treatment validation
+        validateTreatment(treatment, null);
+
+        //checking capacity of new ward
+        checkCapacity(treatment, treatment.dateIn(), treatment.dateOut());
+
+        //saving treatment
+        treatmentsRepository.save(treatment);
+
+        //doctor notification about new treatment
+        notificationService.sendEmail(
+                treatment,
+                "New treatment.",
+                "A new treatment has been created:" +
+                        "\nPatient: " + patientsRepository.findById(treatmentRequest.patientId()).get().name() + "." +
+                        "\nWard: " + wardsRepository.findById(treatmentRequest.wardId()).get().name() + "." +
+                        "\nDates: " + treatmentRequest.dateIn() + " - " + treatmentRequest.dateOut() + "."
+        );
     }
 
-    public void save(Long patientId, Integer doctorId, Integer wardId, Date dateIn, Date dateOut, String notation) {
+
+    public void deleteById(Long id) {
+        ////checking existence of the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //doctor notification about treatment deleting
+        notificationService.sendEmail(
+                treatment,
+                "Treatment deleted.",
+                "The treatment ID " + id + " has been deleted."
+        );
+
+        //deleting of the treatment
+        treatmentsRepository.deleteById(id);
+    }
+
+
+    public void changePatientIdById(Long id, Long newPatientId) {
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+        treatmentsRepository.save(treatment.withPatientId(newPatientId));
+
+        //doctor notification about patient changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The treatment ID " + id + " has been changed." +
+                        "\nNew patient: " + patientsRepository.findById(newPatientId).get().name() + "."
+        );
+    }
+
+
+    public void changeDoctorIdById(Long id, Integer newDoctorId) {
+        ////checking existence and getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //previous doctor notification about changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The doctor of treatment ID " + id + " has been changed." +
+                        "\nYou are not in charge now for this treatment."
+        );
+
+        //saving treatment with new doctor
+        treatmentsRepository.save(treatment.withDoctorId(newDoctorId));
+
+        //new doctor notification about changing
+        notificationService.sendEmail(
+                treatment.withDoctorId(newDoctorId),
+                "Treatment changed.",
+                "The doctor of treatment ID " + id + " has been changed." +
+                        "\nNow you are in charge for this treatment:" +
+                        "\nPatient: " + patientsRepository.findById(treatment.patientId()).get().name() + "." +
+                        "\nWard: " + wardsRepository.findById(treatment.wardId()).get().name() + "." +
+                        "\nDates: " + treatment.dateIn() + " - " + treatment.dateOut() + "."
+        );
+    }
+
+
+    public void changeWardIdById(Long id, Integer newWardId) {
+        //checking existence and getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //checking capacity of new ward
+        checkCapacity(treatment, treatment.dateIn(), treatment.dateOut());
+
+        //saving treatment with new ward
+        treatmentsRepository.save(treatment.withWardId(newWardId));
+
+        //doctor notification about ward changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The treatment ID " + id + " has been changed." +
+                        "\nNew ward: " + wardsRepository.findById(newWardId).get().name() + "."
+        );
+    }
+
+
+    public void changeDateInById(Long id, LocalDate newDateIn) {
+        //checking existence and getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //treatment validation
+        validateTreatment(treatment.withDateIn(newDateIn), treatment.id());
+
+        //checking capacity of ward
+        checkCapacity(treatment, newDateIn, treatment.dateIn().minusDays(1));
+
+        //saving treatment with new dateIn
+        treatmentsRepository.save(treatment.withDateIn(newDateIn));
+
+        //doctor notification about date changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The treatment ID " + id + " has been changed." +
+                        "\nNew dateIn: " + newDateIn + "."
+        );
+    }
+
+
+    public void changeDateOutById(Long id, LocalDate newDateOut) {
+        //checking existence and getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID \" + id + \" not found."));
+
+        //treatment validation
+        validateTreatment(treatment.withDateOut(newDateOut), treatment.id());
+
+        //checking capacity of ward
+        checkCapacity(treatment, treatment.dateOut().plusDays(1), newDateOut);
+
+        //saving treatment with new dateOut
+        treatmentsRepository.save(treatment.withDateOut(newDateOut));
+
+        //doctor notification about date changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The treatment ID " + id + " has been changed." +
+                        "\nNew dateOut: " + newDateOut + "."
+        );
+    }
+
+    private void validateTreatment(Treatment treatment, Long existingTreatmentId) throws IllegalArgumentException {
 
         //checking order of dates
-        if (dateOut.before(dateIn)) {
-            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
+        LocalDate startDate = treatment.dateIn();
+        LocalDate endDate = treatment.dateOut();
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException(
+                    "End treating date (" + endDate + ") cannot be before " +
+                            "start treating date (" + startDate + ")."
+            );
+        }
+
+        //checking department of ward and doctor
+        Integer departmentIdOfWard = wardsRepository.findById(treatment.wardId()).get().departmentId();
+        Integer departmentIdOfDoctor = doctorsRepository.findById(treatment.doctorId()).get().departmentId();
+        if (!Objects.equals(departmentIdOfDoctor, departmentIdOfWard)) {
+            throw new IllegalArgumentException(
+                    "The doctor or ward does not belong to the relevant department."
+            );
         }
 
         //checking overtreatment
-        Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(patientId, dateIn, dateOut, null);
-        if (overtreatment > 0) {
-            throw new IllegalArgumentException("This patient have already a treatment at these dates.");
+        List<Treatment> overlappingTreatments = treatmentsRepository.findOvertreatmentsByPatientId(
+                treatment.patientId(),
+                startDate,
+                endDate,
+                existingTreatmentId
+        );
+        if (!overlappingTreatments.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Patient ID " + treatment.patientId() + " have already treatment at these dates: "
+                            + overlappingTreatments
+            );
         }
+    }
 
+
+    private void checkCapacity(Treatment treatment, LocalDate startDate, LocalDate endDate) {
         //getting capacity of ward
-        Integer capacity = wardsRepository.getCapacityById(wardId);
+        Integer capacity = wardsRepository.getCapacityById(treatment.wardId());
         if (capacity == null) {
-            throw new IllegalArgumentException("Ward not found.");
+            throw new IllegalArgumentException("Ward ID " + treatment.wardId() + " not found.");
         }
 
         //checking taken less than capacity on each day of planned treatment
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(dateIn);
-        while (!calendar.getTime().after(dateOut)) {
-            Integer taken = treatmentsRepository.countTreatmentsInWardOnDate(wardId, new Date(calendar.getTimeInMillis()));
-            taken = (taken == null) ? 0 : taken;
-
-            if (taken >= capacity) {
-                throw new IllegalArgumentException("Not enough available places in the ward for the specified dates.");
+        for (
+                LocalDate date = startDate;
+                !date.isAfter(endDate);
+                date = date.plusDays(1)
+        ) {
+            int treatmentsCount = treatmentsRepository.countTreatmentsInWardOnDate(treatment.wardId(), date);
+            if (treatmentsCount >= capacity) {
+                throw new IllegalArgumentException("Ward ID " + treatment.wardId() +
+                        " capacity exceeded on date: " + date);
             }
-
-            calendar.add(Calendar.DAY_OF_MONTH, 1);
         }
-
-        //creating treatment
-        Treatment treatment = new Treatment(null, patientId, doctorId, wardId, dateIn, dateOut, notation);
-        treatmentsRepository.save(treatment);
-        //DOCTOR NOTICE?
     }
 
-    public void deleteById(Long id) {
-        treatmentsRepository.deleteById(id);
-        //DOCTOR NOTICE?
-    }
 
-    public void changePatientIdById(Long id, Long patientId) {
-        treatmentsRepository.changePatientIdById(id, patientId);
-        //DOCTOR NOTICE?
-    }
-
-    public void changeDoctorIdById(Long id, Integer doctorId) {
-        treatmentsRepository.changeDoctorIdById(id, doctorId);
-        //DOCTOR NOTICE?
-        //DOCTOR NOTICE?
-    }
-
-    public void changeWardIdById(Long id, Integer wardId) {
+    public void changeNotationById(Long id, String newNotation) {
+        //checking existence and getting the aim treatment
         Treatment treatment = treatmentsRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Treatment not found."));
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
 
-        //getting capacity of new ward
-        Integer capacity = wardsRepository.getCapacityById(wardId);
-        if (capacity == null) {
-            throw new IllegalArgumentException("Ward not found.");
-        }
+        //saving treatment with new notation
+        treatmentsRepository.save(treatment.withNotation(newNotation));
 
-        //checking taken less than capacity on each day of planned treatment in new ward
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(treatment.dateIn());
-        while (!calendar.getTime().after(treatment.dateOut())) {
-            checkingCapacity(treatment, capacity, calendar);
-        }
-
-        //setting new ward
-        treatmentsRepository.changeWardIdById(id, wardId);
-        //DOCTOR NOTICE?
-    }
-
-    public void changeDateInById(Long id, Date newDateIn) {
-        //getting the aim treatment
-        Treatment treatment = treatmentsRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Treatment not found."));
-
-        //checking order of dates
-        if (treatment.dateOut().before(newDateIn)) {
-            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
-        }
-
-        //checking overtreatment
-        Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(
-                treatment.patientId(), newDateIn, treatment.dateOut(), id);
-        if (overtreatment > 0) {
-            throw new IllegalArgumentException("This patient have already a treatment at these dates.");
-        }
-
-        //getting capacity of ward
-        Integer capacity = wardsRepository.getCapacityById(treatment.wardId());
-        if (capacity == null) {
-            throw new IllegalArgumentException("Ward not found.");
-        }
-
-        //checking taken less than capacity on each day of planned extension
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(newDateIn);
-        while (!calendar.getTime().after(treatment.dateIn())) {
-            checkingCapacity(treatment, capacity, calendar);
-        }
-
-        //setting new dateIn
-        treatmentsRepository.changeDateInById(id, newDateIn);
-        //DOCTOR NOTICE?
-    }
-
-    public void changeDateOutById(Long id, Date newDateOut) {
-        //getting the aim treatment
-        Treatment treatment = treatmentsRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Treatment not found."));
-
-        //checking order of dates
-        if (newDateOut.before(treatment.dateIn())) {
-            throw new IllegalArgumentException("End treating date cannot be before start treating date.");
-        }
-
-        //checking overtreatment
-        Integer overtreatment = treatmentsRepository.countOvertreatmentsByPatientId(
-                treatment.patientId(), treatment.dateIn(), newDateOut, id);
-        if (overtreatment > 0) {
-            throw new IllegalArgumentException("This patient have already a treatment at these dates.");
-        }
-
-        //getting capacity of ward
-        Integer capacity = wardsRepository.getCapacityById(treatment.wardId());
-        if (capacity == null) {
-            throw new IllegalArgumentException("Ward not found.");
-        }
-
-        //checking taken less than capacity on each day of planned extension
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(treatment.dateOut());
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-        while (!calendar.getTime().after(newDateOut)) {
-            checkingCapacity(treatment, capacity, calendar);
-        }
-
-        //setting new dateOut
-        treatmentsRepository.changeDateOutById(id, newDateOut);
-        //DOCTOR NOTICE?
-    }
-
-    private void checkingCapacity(Treatment treatment, Integer capacity, Calendar calendar) {
-        Integer taken = treatmentsRepository.countTreatmentsInWardOnDate(treatment.wardId(), new Date(calendar.getTimeInMillis()));
-        taken = (taken == null) ? 0 : taken;
-
-        if (taken >= capacity) {
-            throw new IllegalArgumentException("Not enough available places in the ward for the new dates.");
-        }
-
-        calendar.add(Calendar.DAY_OF_MONTH, 1);
-    }
-
-    public void changeNotationById(Long id, String notation) {
-        treatmentsRepository.changeNotationById(id, notation);
-        //DOCTOR NOTICE?
+        //doctor notification about notation changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The treatment ID " + id + " has been changed." +
+                        "\nNew notation: " + newNotation + "."
+        );
     }
 
     @Transactional
-    public Integer getTreatmentsStats(Date startDate, Date endDate) {
+    public List<TreatmentsController.TreatmentStats> getTreatmentsStatsByDepartments(
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return treatmentsRepository.findAllTreatmentsEndingBetweenByDepartments(startDate, endDate);
+    }
+
+
+    @Transactional
+    public Integer countTreatmentsStats(
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
         return treatmentsRepository.countTreatmentsEndingBetween(startDate, endDate);
     }
 
-    @Transactional
-    public Integer getTreatmentsStatsByDoctorId(Integer doctorId, Date startDate, Date endDate) {
-        return treatmentsRepository.countTreatmentsEndingBetweenByDoctorId(doctorId, startDate, endDate);
-    }
 
     @Transactional
-    public Integer getTreatmentsStatsByDepartmentId(Integer departmentId, Date startDate, Date endDate) {
-        return treatmentsRepository.countTreatmentsEndingBetweenByDepartmentId(departmentId, startDate, endDate);
+    public Integer countTreatmentsStatsByDoctorId(
+            Integer doctorId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return treatmentsRepository.countTreatmentsEndingBetweenByDoctorId(
+                doctorId,
+                startDate,
+                endDate
+        );
     }
+
+
+    @Transactional
+    public Integer countTreatmentsStatsByDepartmentId(
+            Integer departmentId,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        return treatmentsRepository.countTreatmentsEndingBetweenByDepartmentId(
+                departmentId,
+                startDate,
+                endDate
+        );
+    }
+
 
     public Optional<Treatment> findById(Long id) {
         return treatmentsRepository.findById(id);
     }
 
+
     public List<Treatment> findAll() {
         return (List<Treatment>) treatmentsRepository.findAll();
     }
+
 
     public List<Treatment> findByPatientId(Long patientId) {
         return treatmentsRepository.findByPatientId(patientId);
     }
 
+
     public List<Treatment> findByDoctorId(Integer doctorId) {
         return treatmentsRepository.findByDoctorId(doctorId);
     }
+
 
     public List<Treatment> findByWardId(Integer wardId) {
         return treatmentsRepository.findByWardId(wardId);
