@@ -6,11 +6,11 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDate;
@@ -104,7 +104,7 @@ public class TreatmentsController {
                 .body(resource);
     }
 
-    public record TreatmentStats(Integer departmentId, Integer count) {
+    public record TreatmentStats(@Column("departmentId")Integer departmentId, Integer count) {
     }
 
     @GetMapping("/stats_by_doctor")
