@@ -1,7 +1,7 @@
 package lemon.hospitaltable.table.repositories;
 
-import lemon.hospitaltable.table.controllers.TreatmentsController;
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.TreatmentStats;
 import org.springframework.data.jdbc.repository.query.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
@@ -57,7 +57,7 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
                 treatments.date_out BETWEEN :startDate AND :endDate
             GROUP BY wards.department_id
             """)
-    List<TreatmentsController.TreatmentStats> findAllTreatmentsEndingBetweenByDepartments(
+    List<TreatmentStats> findAllTreatmentsEndingBetweenByDepartments(
             LocalDate startDate,
             LocalDate endDate
     );

@@ -3,10 +3,10 @@ package lemon.hospitaltable.table.controllers;
 import lemon.hospitaltable.table.objects.Doctor;
 import lemon.hospitaltable.table.services.DoctorsService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -59,29 +59,20 @@ public class DoctorsController {
         doctorsService.changeEmailById(id, newEmail);
     }
 
-    @GetMapping("/{id}")
-    public Optional<Doctor> getDoctor(@PathVariable Integer id) {
-        return doctorsService.findById(id);
-    }
+    @GetMapping("/find")
+    public ResponseEntity<?> findDoctors(
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) Integer departmentId,
+            @RequestParam(required = false) String position
+    ) {
 
-    @GetMapping
-    public List<Doctor> findAll() {
-        return doctorsService.findAll();
-    }
-
-    @GetMapping("/find_by_name")
-    public List<Doctor> findByName(@RequestParam String name) {
-        return doctorsService.findByName(name);
-    }
-
-    @GetMapping("/find_by_department")
-    public List<Doctor> findByDepartmentId(@RequestParam Integer departmentId) {
-        return doctorsService.findByDepartmentId(departmentId);
-    }
-
-    @GetMapping("/find_by_position")
-    public List<Doctor> findByPosition(@RequestParam String position) {
-        return doctorsService.findByPosition(position);
+        List<Doctor> doctors = doctorsService.findDoctors(id, name, departmentId, position);
+        if (doctors.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(doctors);
+        }
     }
 }
 

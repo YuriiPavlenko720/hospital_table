@@ -8,8 +8,11 @@ import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 @Service
@@ -100,28 +103,21 @@ public class DoctorsService {
     }
 
 
-    public Optional<Doctor> findById(Integer id) {
-        return doctorsRepository.findById(id);
-    }
-
-
-    public List<Doctor> findAll() {
-        return (List<Doctor>) doctorsRepository.findAll();
-    }
-
-
-    public List<Doctor> findByName(String name) {
-        return doctorsRepository.findByName(name);
-    }
-
-
-    public List<Doctor> findByDepartmentId(Integer departmentId) {
-        return doctorsRepository.findByDepartmentId(departmentId);
-    }
-
-
-    public List<Doctor> findByPosition(String position) {
-        return doctorsRepository.findByPosition(position);
+    public List<Doctor> findDoctors(Integer id, String name, Integer departmentId, String position) {
+        if (id != null) {
+            Optional<Doctor> doctor = doctorsRepository.findById(id);
+            return doctor.map(Collections::singletonList)
+                    .orElse(Collections.emptyList());
+        } else if (name != null && !name.isEmpty()) {
+            return doctorsRepository.findByName(name);
+        } else if (departmentId != null) {
+            return doctorsRepository.findByDepartmentId(departmentId);
+        } else if (position != null && !position.isEmpty()) {
+            return doctorsRepository.findByPosition(position);
+        } else {
+            return StreamSupport.stream(doctorsRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList());
+        }
     }
 }
 

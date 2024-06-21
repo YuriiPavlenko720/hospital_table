@@ -3,9 +3,9 @@ package lemon.hospitaltable.table.controllers;
 import lemon.hospitaltable.table.objects.Department;
 import lemon.hospitaltable.table.services.DepartmentsService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -32,13 +32,17 @@ public class DepartmentsController {
         departmentsService.renameById(id, newName);
     }
 
-    @GetMapping("/{id}")
-    public Optional<Department> getDepartment (@PathVariable Integer id) {
-        return departmentsService.findById(id);
-    }
+    @GetMapping("/find")
+    public ResponseEntity<?> findDoctors(
+            @RequestParam(required = false) Integer id,
+            @RequestParam(required = false) String name
+            ) {
 
-    @GetMapping
-    public List<Department> findAll() {
-        return departmentsService.findAll();
+        List<Department> departments = departmentsService.findDepartments(id, name);
+        if (departments.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(departments);
+        }
     }
 }

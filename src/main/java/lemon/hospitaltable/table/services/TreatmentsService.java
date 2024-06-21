@@ -2,6 +2,7 @@ package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.controllers.TreatmentsController;
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.TreatmentStats;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
@@ -10,9 +11,12 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 @Service
@@ -265,7 +269,7 @@ public class TreatmentsService {
     }
 
     @Transactional
-    public List<TreatmentsController.TreatmentStats> getTreatmentsStatsByDepartments(
+    public List<TreatmentStats> getTreatmentsStatsByDepartments(
             LocalDate startDate,
             LocalDate endDate
     ) {
@@ -310,27 +314,20 @@ public class TreatmentsService {
     }
 
 
-    public Optional<Treatment> findById(Long id) {
-        return treatmentsRepository.findById(id);
-    }
-
-
-    public List<Treatment> findAll() {
-        return (List<Treatment>) treatmentsRepository.findAll();
-    }
-
-
-    public List<Treatment> findByPatientId(Long patientId) {
-        return treatmentsRepository.findByPatientId(patientId);
-    }
-
-
-    public List<Treatment> findByDoctorId(Integer doctorId) {
-        return treatmentsRepository.findByDoctorId(doctorId);
-    }
-
-
-    public List<Treatment> findByWardId(Integer wardId) {
-        return treatmentsRepository.findByWardId(wardId);
+    public List<Treatment> findTreatments(Long id, Long patientId, Integer doctorId, Integer wardId) {
+        if (id != null) {
+            Optional<Treatment> treatment = treatmentsRepository.findById(id);
+            return treatment.map(Collections::singletonList)
+                    .orElse(Collections.emptyList());
+        } else if (patientId != null) {
+            return treatmentsRepository.findByPatientId(patientId);
+        } else if (doctorId != null) {
+            return treatmentsRepository.findByDoctorId(doctorId);
+        } else if (wardId != null) {
+            return treatmentsRepository.findByWardId(wardId);
+        } else {
+            return StreamSupport.stream(treatmentsRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList());
+        }
     }
 }

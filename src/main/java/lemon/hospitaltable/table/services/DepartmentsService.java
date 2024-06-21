@@ -5,8 +5,11 @@ import lemon.hospitaltable.table.objects.*;
 import lemon.hospitaltable.table.repositories.*;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 @Service
@@ -48,11 +51,17 @@ public class DepartmentsService {
         departmentsRepository.save(department.withName(newName));
     }
 
-    public Optional<Department> findById(Integer id) {
-        return departmentsRepository.findById(id);
-    }
 
-    public List<Department> findAll() {
-        return (List<Department>) departmentsRepository.findAll();
+    public List<Department> findDepartments(Integer id, String name) {
+        if (id != null) {
+            Optional<Department> department = departmentsRepository.findById(id);
+            return department.map(Collections::singletonList)
+                    .orElse(Collections.emptyList());
+        } else if (name != null && !name.isEmpty()) {
+            return departmentsRepository.findByName(name);
+        } else {
+            return StreamSupport.stream(departmentsRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList());
+        }
     }
 }

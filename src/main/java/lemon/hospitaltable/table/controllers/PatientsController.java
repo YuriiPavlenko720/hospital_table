@@ -3,10 +3,10 @@ package lemon.hospitaltable.table.controllers;
 import lemon.hospitaltable.table.objects.Patient;
 import lemon.hospitaltable.table.services.PatientsService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -65,23 +65,18 @@ public class PatientsController {
         patientsService.changeNotationById(id, newNotation);
     }
 
-    @GetMapping("/{id}")
-    public Optional<Patient> getPatient(@PathVariable Long id) {
-        return patientsService.findById(id);
-    }
+    @GetMapping("/find")
+    public ResponseEntity<?> findPatients(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String status
+    ) {
 
-    @GetMapping
-    public List<Patient> findAll() {
-        return patientsService.findAll();
-    }
-
-    @GetMapping("/find_by_name")
-    public List<Patient> findByName(@RequestParam String name) {
-        return patientsService.findByName(name);
-    }
-
-    @GetMapping("/find_by_status")
-    public List<Patient> findByStatus(@RequestParam String status) {
-        return patientsService.findByStatus(status);
+        List<Patient> patients = patientsService.findPatients(id, name, status);
+        if (patients.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(patients);
+        }
     }
 }

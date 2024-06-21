@@ -1,12 +1,12 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.TreatmentStats;
 import lemon.hospitaltable.table.services.TreatmentsService;
 import lombok.AllArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -15,7 +15,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -89,7 +88,7 @@ public class TreatmentsController {
 
         try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
             for (TreatmentStats stat : stats) {
-                csvPrinter.printRecord(stat.departmentId, stat.count);
+                csvPrinter.printRecord(stat.departmentId(), stat.count());
             }
             csvPrinter.printRecord("Total", totalTreatments);
         } catch (IOException e) {
@@ -102,9 +101,6 @@ public class TreatmentsController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"treating_stats.csv\"")
                 .contentType(MediaType.TEXT_PLAIN)
                 .body(resource);
-    }
-
-    public record TreatmentStats(@Column("departmentId")Integer departmentId, Integer count) {
     }
 
     @GetMapping("/stats_by_doctor")
@@ -169,28 +165,19 @@ public class TreatmentsController {
                 .body(resource);
     }
 
-    @GetMapping("/{id}")
-    public Optional<Treatment> getTreatment(@PathVariable Long id) {
-        return treatmentsService.findById(id);
-    }
+    @GetMapping("/find")
+    public ResponseEntity<?> findTreatments(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) Long patientId,
+            @RequestParam(required = false) Integer doctorId,
+            @RequestParam(required = false) Integer wardId
+    ) {
 
-    @GetMapping
-    public List<Treatment> findAll() {
-        return treatmentsService.findAll();
-    }
-
-    @GetMapping("/find_by_patient")
-    public List<Treatment> findByPatientId(@RequestParam Long patientId) {
-        return treatmentsService.findByPatientId(patientId);
-    }
-
-    @GetMapping("/find_by_doctor")
-    public List<Treatment> findByDoctorId(@RequestParam Integer doctorId) {
-        return treatmentsService.findByDoctorId(doctorId);
-    }
-
-    @GetMapping("/find_by_ward")
-    public List<Treatment> findByWardId(@RequestParam Integer wardId) {
-        return treatmentsService.findByWardId(wardId);
+        List<Treatment> treatments = treatmentsService.findTreatments(id, patientId, doctorId, wardId);
+        if (treatments.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(treatments);
+        }
     }
 }

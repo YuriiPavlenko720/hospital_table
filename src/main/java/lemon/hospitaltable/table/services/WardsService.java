@@ -9,10 +9,12 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @AllArgsConstructor
 @Service
@@ -119,28 +121,21 @@ public class WardsService {
     }
 
 
-    public Optional<Ward> findById(Integer id) {
-        return wardsRepository.findById(id);
-    }
-
-
-    public List<Ward> findAll() {
-        return (List<Ward>) wardsRepository.findAll();
-    }
-
-
-    public List<Ward> findByLevel(Integer level) {
-        return wardsRepository.findByLevel(level);
-    }
-
-
-    public List<Ward> findByName(String name) {
-        return wardsRepository.findByName(name);
-    }
-
-
-    public List<Ward> findByDepartmentId(Integer departmentId) {
-        return wardsRepository.findByDepartmentId(departmentId);
+    public List<Ward> findWards(Integer id, Integer level, String name, Integer departmentId) {
+        if (id != null) {
+            Optional<Ward> ward = wardsRepository.findById(id);
+            return ward.map(Collections::singletonList)
+                    .orElse(Collections.emptyList());
+        } else if (level != null) {
+            return wardsRepository.findByLevel(level);
+        } else if (name != null && !name.isEmpty()) {
+            return wardsRepository.findByName(name);
+        } else if (departmentId != null) {
+            return wardsRepository.findByDepartmentId(departmentId);
+        } else {
+            return StreamSupport.stream(wardsRepository.findAll().spliterator(), false)
+                    .collect(Collectors.toList());
+        }
     }
 
 
