@@ -2,6 +2,7 @@ package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.controllers.TreatmentsController;
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.TreatmentStats;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
@@ -265,7 +266,7 @@ public class TreatmentsService {
     }
 
     @Transactional
-    public List<TreatmentsController.TreatmentStats> getTreatmentsStatsByDepartments(
+    public List<TreatmentStats> getTreatmentsStatsByDepartments(
             LocalDate startDate,
             LocalDate endDate
     ) {
