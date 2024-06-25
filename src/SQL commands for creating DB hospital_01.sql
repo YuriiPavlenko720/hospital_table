@@ -62,21 +62,3 @@ CREATE TABLE `treatments` (
   CONSTRAINT `treat_patient_id` FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`) ON DELETE SET NULL,
   CONSTRAINT `treat_ward_id` FOREIGN KEY (`ward_id`) REFERENCES `wards` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
-DROP TABLE IF EXISTS `heads`;
-CREATE TABLE `heads` (
-  `department_id` INT NOT NULL,
-  `doctor_id` INT NULL,
-  PRIMARY KEY (`department_id`),
-  INDEX `doctor_id_idx` (`doctor_id` ASC) VISIBLE,
-  CONSTRAINT `department_id`
-    FOREIGN KEY (`department_id`)
-    REFERENCES `hospital_01`.`departments` (`id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `doctor_id`
-    FOREIGN KEY (`doctor_id`)
-    REFERENCES `hospital_01`.`doctors` (`id`)
-    ON DELETE SET NULL
-    ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
