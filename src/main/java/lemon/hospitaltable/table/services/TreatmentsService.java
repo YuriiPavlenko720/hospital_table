@@ -1,8 +1,7 @@
 package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.controllers.TreatmentsController;
-import lemon.hospitaltable.table.objects.Treatment;
-import lemon.hospitaltable.table.objects.TreatmentStats;
+import lemon.hospitaltable.table.objects.*;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
@@ -11,7 +10,6 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -43,7 +41,7 @@ public class TreatmentsService {
         );
 
         //treatment validation
-        validateTreatment(treatment, null);
+        validateTreatment(treatment, 0L);
 
         //checking capacity of new ward
         checkCapacity(treatment, treatment.dateIn(), treatment.dateOut());
@@ -52,19 +50,23 @@ public class TreatmentsService {
         treatmentsRepository.save(treatment);
 
         //doctor notification about new treatment
+        Patient patient = patientsRepository.findById(treatment.patientId())
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + treatment.patientId() + " not found."));
+        Ward ward = wardsRepository.findById(treatment.wardId())
+                .orElseThrow(() -> new IllegalArgumentException("Ward ID " + treatment.wardId() + " not found."));
         notificationService.sendEmail(
                 treatment,
                 "New treatment.",
                 "A new treatment has been created:" +
-                        "\nPatient: " + patientsRepository.findById(treatmentRequest.patientId()).get().name() + "." +
-                        "\nWard: " + wardsRepository.findById(treatmentRequest.wardId()).get().name() + "." +
+                        "\nPatient: " + patient + "." +
+                        "\nWard: " + ward.name() + "." +
                         "\nDates: " + treatmentRequest.dateIn() + " - " + treatmentRequest.dateOut() + "."
         );
     }
 
 
     public void deleteById(Long id) {
-        ////checking existence of the aim treatment
+        //checking existence of the aim treatment
         Treatment treatment = treatmentsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
 
@@ -81,8 +83,15 @@ public class TreatmentsService {
 
 
     public void changePatientIdById(Long id, Long newPatientId) {
+        //existence and getting the aim treatment
         Treatment treatment = treatmentsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //checking new patient existence
+        Patient patient = patientsRepository.findById(newPatientId)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + newPatientId + " not found."));
+
+        //saving treatment with new patient
         treatmentsRepository.save(treatment.withPatientId(newPatientId));
 
         //doctor notification about patient changing
@@ -90,15 +99,19 @@ public class TreatmentsService {
                 treatment,
                 "Treatment changed.",
                 "The treatment ID " + id + " has been changed." +
-                        "\nNew patient: " + patientsRepository.findById(newPatientId).get().name() + "."
+                        "\nNew patient: " + patient + "."
         );
     }
 
 
     public void changeDoctorIdById(Long id, Integer newDoctorId) {
-        ////checking existence and getting the aim treatment
+        //checking existence and getting the aim treatment
         Treatment treatment = treatmentsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //checking new doctor existence
+        Doctor doctor = doctorsRepository.findById(newDoctorId)
+                .orElseThrow(() -> new IllegalArgumentException("Doctor ID " + newDoctorId + " not found."));
 
         //previous doctor notification about changing
         notificationService.sendEmail(
@@ -112,13 +125,17 @@ public class TreatmentsService {
         treatmentsRepository.save(treatment.withDoctorId(newDoctorId));
 
         //new doctor notification about changing
+        Patient patient = patientsRepository.findById(treatment.patientId())
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + treatment.patientId() + " not found."));
+        Ward ward = wardsRepository.findById(treatment.wardId())
+                .orElseThrow(() -> new IllegalArgumentException("Ward ID " + treatment.wardId() + " not found."));
         notificationService.sendEmail(
                 treatment.withDoctorId(newDoctorId),
                 "Treatment changed.",
                 "The doctor of treatment ID " + id + " has been changed." +
                         "\nNow you are in charge for this treatment:" +
-                        "\nPatient: " + patientsRepository.findById(treatment.patientId()).get().name() + "." +
-                        "\nWard: " + wardsRepository.findById(treatment.wardId()).get().name() + "." +
+                        "\nPatient: " + patient + "." +
+                        "\nWard: " + ward.name() + "." +
                         "\nDates: " + treatment.dateIn() + " - " + treatment.dateOut() + "."
         );
     }
@@ -128,6 +145,10 @@ public class TreatmentsService {
         //checking existence and getting the aim treatment
         Treatment treatment = treatmentsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //checking new ward existence
+        Ward ward = wardsRepository.findById(newWardId)
+                .orElseThrow(() -> new IllegalArgumentException("Ward ID " + newWardId + " not found."));
 
         //checking capacity of new ward
         checkCapacity(treatment, treatment.dateIn(), treatment.dateOut());
@@ -140,7 +161,7 @@ public class TreatmentsService {
                 treatment,
                 "Treatment changed.",
                 "The treatment ID " + id + " has been changed." +
-                        "\nNew ward: " + wardsRepository.findById(newWardId).get().name() + "."
+                        "\nNew ward: " + ward.name() + "."
         );
     }
 
@@ -194,6 +215,10 @@ public class TreatmentsService {
 
     private void validateTreatment(Treatment treatment, Long existingTreatmentId) throws IllegalArgumentException {
 
+        //checking patient existence of the aim treatment
+        Patient patient = patientsRepository.findById(treatment.patientId())
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + treatment.patientId() + " not found."));
+
         //checking order of dates
         LocalDate startDate = treatment.dateIn();
         LocalDate endDate = treatment.dateOut();
@@ -205,8 +230,12 @@ public class TreatmentsService {
         }
 
         //checking department of ward and doctor
-        Integer departmentIdOfWard = wardsRepository.findById(treatment.wardId()).get().departmentId();
-        Integer departmentIdOfDoctor = doctorsRepository.findById(treatment.doctorId()).get().departmentId();
+        Integer departmentIdOfWard = wardsRepository.findById(treatment.wardId())
+                .orElseThrow(() -> new IllegalArgumentException("Ward ID " + treatment.wardId() + " not found."))
+                .departmentId();
+        Integer departmentIdOfDoctor = doctorsRepository.findById(treatment.doctorId())
+                .orElseThrow(() -> new IllegalArgumentException("Doctor ID " + treatment.doctorId() + " not found."))
+                .departmentId();
         if (!Objects.equals(departmentIdOfDoctor, departmentIdOfWard)) {
             throw new IllegalArgumentException(
                     "The doctor or ward does not belong to the relevant department."
@@ -314,12 +343,13 @@ public class TreatmentsService {
     }
 
 
-    public List<Treatment> findTreatments(Long id, Long patientId, Integer doctorId, Integer wardId) {
-        if (id != null) {
-            Optional<Treatment> treatment = treatmentsRepository.findById(id);
-            return treatment.map(Collections::singletonList)
-                    .orElse(Collections.emptyList());
-        } else if (patientId != null) {
+    public Optional<Treatment> findById(Long id) {
+        return treatmentsRepository.findById(id);
+    }
+
+
+    public List<Treatment> findTreatments(Long patientId, Integer doctorId, Integer wardId) {
+        if (patientId != null) {
             return treatmentsRepository.findByPatientId(patientId);
         } else if (doctorId != null) {
             return treatmentsRepository.findByDoctorId(doctorId);

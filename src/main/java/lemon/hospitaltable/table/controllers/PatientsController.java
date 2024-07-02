@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -65,14 +66,18 @@ public class PatientsController {
         patientsService.changeNotationById(id, newNotation);
     }
 
+    @GetMapping("/{id}")
+    public Optional<Patient> getPatient(@PathVariable Long id) {
+        return patientsService.findById(id);
+    }
+
     @GetMapping("/find")
     public ResponseEntity<?> findPatients(
-            @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String status
     ) {
 
-        List<Patient> patients = patientsService.findPatients(id, name, status);
+        List<Patient> patients = patientsService.findPatients(name, status);
         if (patients.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {

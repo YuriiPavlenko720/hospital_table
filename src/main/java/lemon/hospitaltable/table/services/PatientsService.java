@@ -8,7 +8,6 @@ import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -98,12 +97,13 @@ public class PatientsService {
     }
 
 
-    public List<Patient> findPatients(Long id, String name, String status) {
-        if (id != null) {
-            Optional<Patient> patient = patientsRepository.findById(id);
-            return patient.map(Collections::singletonList)
-                    .orElse(Collections.emptyList());
-        } else if (name != null && !name.isEmpty()) {
+    public Optional<Patient> findById(Long id) {
+        return patientsRepository.findById(id);
+    }
+
+
+    public List<Patient> findPatients(String name, String status) {
+        if (name != null && !name.isEmpty()) {
             return patientsRepository.findByName(name);
         } else if (status != null && !status.isEmpty()) {
             return patientsRepository.findByStatus(status);

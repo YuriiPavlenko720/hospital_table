@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -165,15 +166,18 @@ public class TreatmentsController {
                 .body(resource);
     }
 
+    @GetMapping("/{id}")
+    public Optional<Treatment> getTreatment(@PathVariable Long id) {
+        return treatmentsService.findById(id);
+    }
+
     @GetMapping("/find")
     public ResponseEntity<?> findTreatments(
-            @RequestParam(required = false) Long id,
             @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) Integer doctorId,
             @RequestParam(required = false) Integer wardId
     ) {
-
-        List<Treatment> treatments = treatmentsService.findTreatments(id, patientId, doctorId, wardId);
+        List<Treatment> treatments = treatmentsService.findTreatments(patientId, doctorId, wardId);
         if (treatments.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {

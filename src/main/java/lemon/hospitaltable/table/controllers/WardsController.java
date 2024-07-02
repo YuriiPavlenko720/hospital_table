@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @AllArgsConstructor
 @RestController
@@ -54,15 +55,19 @@ public class WardsController {
         wardsService.changeCapacityById(id, newCapacity);
     }
 
+    @GetMapping("/{id}")
+    public Optional<Ward> getWard(@PathVariable Integer id) {
+        return wardsService.findById(id);
+    }
+
     @GetMapping("/find")
     public ResponseEntity<?> findWards(
-            @RequestParam(required = false) Integer id,
             @RequestParam(required = false) Integer level,
             @RequestParam(required = false) String name,
             @RequestParam(required = false) Integer departmentId
     ) {
 
-        List<Ward> wards = wardsService.findWards(id, level, name, departmentId);
+        List<Ward> wards = wardsService.findWards(level, name, departmentId);
         if (wards.isEmpty()) {
             return ResponseEntity.notFound().build();
         } else {

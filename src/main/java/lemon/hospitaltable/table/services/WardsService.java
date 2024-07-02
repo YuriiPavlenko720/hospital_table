@@ -1,15 +1,16 @@
 package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.controllers.WardsController;
+import lemon.hospitaltable.table.objects.Department;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.objects.Ward;
+import lemon.hospitaltable.table.repositories.DepartmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.WardsRepositoryInterface;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,8 +23,20 @@ public class WardsService {
 
     private final WardsRepositoryInterface wardsRepository;
     private final TreatmentsRepositoryInterface treatmentsRepository;
+    private final DepartmentsRepositoryInterface departmentsRepository;
 
     public void save(WardsController.WardRequest wardRequest) {
+
+        //checking department existence
+        Department department = departmentsRepository.findById(wardRequest.departmentId())
+                .orElseThrow(() -> new IllegalArgumentException("Department ID " + wardRequest.departmentId() + " not found."));
+
+        //checking capacity
+        if (wardRequest.capacity() < 0) {
+            throw new IllegalArgumentException("Capacity must be greater than 0");
+        }
+
+        //creating of the ward
         wardsRepository.save(new Ward(
                 null,
                 wardRequest.level(),
@@ -76,6 +89,10 @@ public class WardsService {
         Ward ward = wardsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ward ID " + id + " not found."));
 
+        //checking new department existence
+        Department department = departmentsRepository.findById(newDepartmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Department ID " + newDepartmentId + " not found."));
+
         //checking treatments existing in the aim ward
         List<Treatment> treatments = treatmentsRepository.findByWardId(id);
         for (Treatment treatment : treatments) {
@@ -95,7 +112,12 @@ public class WardsService {
 
     @Transactional
     public void changeCapacityById(Integer id, Integer newCapacity) {
-        //checking existence and getting of the aim ward
+        //checking new capacity
+        if (newCapacity < 0) {
+            throw new IllegalArgumentException("Capacity must be greater than 0");
+        }
+
+        //checking existence and getting the aim ward
         Ward ward = wardsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Ward ID " + id + " not found."));
 
@@ -121,12 +143,13 @@ public class WardsService {
     }
 
 
-    public List<Ward> findWards(Integer id, Integer level, String name, Integer departmentId) {
-        if (id != null) {
-            Optional<Ward> ward = wardsRepository.findById(id);
-            return ward.map(Collections::singletonList)
-                    .orElse(Collections.emptyList());
-        } else if (level != null) {
+    public Optional<Ward> findById(Integer id) {
+        return wardsRepository.findById(id);
+    }
+
+
+    public List<Ward> findWards(Integer level, String name, Integer departmentId) {
+        if (level != null) {
             return wardsRepository.findByLevel(level);
         } else if (name != null && !name.isEmpty()) {
             return wardsRepository.findByName(name);

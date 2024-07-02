@@ -1,14 +1,15 @@
 package lemon.hospitaltable.table.services;
 
 import lemon.hospitaltable.table.controllers.DoctorsController;
+import lemon.hospitaltable.table.objects.Department;
 import lemon.hospitaltable.table.objects.Doctor;
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.repositories.DepartmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,9 +21,16 @@ public class DoctorsService {
 
     private final DoctorsRepositoryInterface doctorsRepository;
     private final TreatmentsRepositoryInterface treatmentsRepository;
+    private final DepartmentsRepositoryInterface departmentsRepository;
 
 
     public void save(DoctorsController.DoctorRequest doctorRequest) {
+
+        //checking department existence
+        Department department = departmentsRepository.findById(doctorRequest.departmentId())
+                .orElseThrow(() -> new IllegalArgumentException("Department ID " + doctorRequest.departmentId() + " not found."));
+
+        //creating of the doctor
         doctorsRepository.save(new Doctor(
                 null,
                 doctorRequest.name(),
@@ -80,6 +88,10 @@ public class DoctorsService {
         Doctor doctor = doctorsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Doctor ID " + id + " not found."));
 
+        //checking new department existence
+        Department department = departmentsRepository.findById(newDepartmentId)
+                .orElseThrow(() -> new IllegalArgumentException("Department ID " + newDepartmentId + " not found."));
+
         //checking existence of treatments at the aim doctor
         List<Treatment> treatments = treatmentsRepository.findByDoctorId(id);
         for (Treatment treatment : treatments) {
@@ -103,12 +115,13 @@ public class DoctorsService {
     }
 
 
-    public List<Doctor> findDoctors(Integer id, String name, Integer departmentId, String position) {
-        if (id != null) {
-            Optional<Doctor> doctor = doctorsRepository.findById(id);
-            return doctor.map(Collections::singletonList)
-                    .orElse(Collections.emptyList());
-        } else if (name != null && !name.isEmpty()) {
+    public Optional<Doctor> findById(Integer id) {
+        return doctorsRepository.findById(id);
+    }
+
+
+    public List<Doctor> findDoctors(String name, Integer departmentId, String position) {
+        if (name != null && !name.isEmpty()) {
             return doctorsRepository.findByName(name);
         } else if (departmentId != null) {
             return doctorsRepository.findByDepartmentId(departmentId);
