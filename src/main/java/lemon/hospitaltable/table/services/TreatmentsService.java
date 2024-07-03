@@ -1,6 +1,5 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.controllers.TreatmentsController;
 import lemon.hospitaltable.table.objects.*;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
@@ -27,7 +26,7 @@ public class TreatmentsService {
     private final NotificationService notificationService;
 
 
-    public void save(TreatmentsController.TreatmentRequest treatmentRequest) {
+    public Treatment save(TreatmentRequest treatmentRequest) {
 
         //creating treatment for validation
         Treatment treatment = new Treatment(
@@ -37,6 +36,7 @@ public class TreatmentsService {
                 treatmentRequest.wardId(),
                 treatmentRequest.dateIn(),
                 treatmentRequest.dateOut(),
+                treatmentRequest.diagnosis(),
                 treatmentRequest.notation()
         );
 
@@ -45,9 +45,6 @@ public class TreatmentsService {
 
         //checking capacity of new ward
         checkCapacity(treatment, treatment.dateIn(), treatment.dateOut());
-
-        //saving treatment
-        treatmentsRepository.save(treatment);
 
         //doctor notification about new treatment
         Patient patient = patientsRepository.findById(treatment.patientId())
@@ -62,6 +59,9 @@ public class TreatmentsService {
                         "\nWard: " + ward.name() + "." +
                         "\nDates: " + treatmentRequest.dateIn() + " - " + treatmentRequest.dateOut() + "."
         );
+
+        //saving treatment
+        return treatmentsRepository.save(treatment);
     }
 
 
@@ -279,6 +279,22 @@ public class TreatmentsService {
         }
     }
 
+    public void changeDiagnosisById(Long id, String newDiagnosis) {
+        //checking existence and getting the aim treatment
+        Treatment treatment = treatmentsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Treatment ID " + id + " not found."));
+
+        //saving treatment with new diagnosis
+        treatmentsRepository.save(treatment.withDiagnosis(newDiagnosis));
+
+        //doctor notification about diagnosis changing
+        notificationService.sendEmail(
+                treatment,
+                "Treatment changed.",
+                "The treatment ID " + id + " has been changed." +
+                        "\nNew diagnosis: " + newDiagnosis + "."
+        );
+    }
 
     public void changeNotationById(Long id, String newNotation) {
         //checking existence and getting the aim treatment

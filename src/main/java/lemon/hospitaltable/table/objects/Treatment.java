@@ -14,6 +14,7 @@ public record Treatment(
         @With @Column("ward_id") Integer wardId,
         @With @Column("date_in") LocalDate dateIn,
         @With @Column("date_out") LocalDate dateOut,
+        @With String diagnosis,
         @With String notation
 ) {
 }

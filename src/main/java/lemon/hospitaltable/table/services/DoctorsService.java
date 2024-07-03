@@ -1,8 +1,8 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.controllers.DoctorsController;
 import lemon.hospitaltable.table.objects.Department;
 import lemon.hospitaltable.table.objects.Doctor;
+import lemon.hospitaltable.table.objects.DoctorRequest;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.repositories.DepartmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
@@ -24,17 +24,21 @@ public class DoctorsService {
     private final DepartmentsRepositoryInterface departmentsRepository;
 
 
-    public void save(DoctorsController.DoctorRequest doctorRequest) {
+    public Doctor save(DoctorRequest doctorRequest) {
 
         //checking department existence
         Department department = departmentsRepository.findById(doctorRequest.departmentId())
                 .orElseThrow(() -> new IllegalArgumentException("Department ID " + doctorRequest.departmentId() + " not found."));
 
         //creating of the doctor
-        doctorsRepository.save(new Doctor(
+        return doctorsRepository.save(new Doctor(
                 null,
                 doctorRequest.name(),
                 doctorRequest.birth(),
+                doctorRequest.sex(),
+                doctorRequest.address(),
+                doctorRequest.phone(),
+                doctorRequest.interests(),
                 doctorRequest.position(),
                 doctorRequest.departmentId(),
                 doctorRequest.email()

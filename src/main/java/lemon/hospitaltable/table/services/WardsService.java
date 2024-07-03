@@ -1,9 +1,9 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.controllers.WardsController;
 import lemon.hospitaltable.table.objects.Department;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.objects.Ward;
+import lemon.hospitaltable.table.objects.WardRequest;
 import lemon.hospitaltable.table.repositories.DepartmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.WardsRepositoryInterface;
@@ -25,7 +25,7 @@ public class WardsService {
     private final TreatmentsRepositoryInterface treatmentsRepository;
     private final DepartmentsRepositoryInterface departmentsRepository;
 
-    public void save(WardsController.WardRequest wardRequest) {
+    public Ward save(WardRequest wardRequest) {
 
         //checking department existence
         Department department = departmentsRepository.findById(wardRequest.departmentId())
@@ -37,7 +37,7 @@ public class WardsService {
         }
 
         //creating of the ward
-        wardsRepository.save(new Ward(
+        return wardsRepository.save(new Ward(
                 null,
                 wardRequest.level(),
                 wardRequest.name(),
@@ -163,26 +163,36 @@ public class WardsService {
 
 
     @Transactional
-    public Map<Integer, DepartmentsOccupancyStats> getWardsOccupancyStats(LocalDate date) {
+    public Map<String, DepartmentsOccupancyStats> getWardsOccupancyStats(LocalDate date) {
         List<Ward> wards = (List<Ward>) wardsRepository.findAll();
+        List<Department> departments = (List<Department>) departmentsRepository.findAll();
 
-        Map<Integer, Map<Integer, Integer>> freeBedsByDepartmentAndWard = wards.stream()
-                .collect(Collectors.groupingBy(Ward::departmentId,
-                        Collectors.toMap(Ward::id, ward -> {
-                            Integer taken = treatmentsRepository.countTreatmentsInWardOnDate(ward.id(), date);
-                            taken = (taken == null) ? 0 : taken;
-                            return ward.capacity() - taken;
-                        })));
+        Map<Integer, String> departmentIdToNameMap = departments.stream()
+                .collect(Collectors.toMap(Department::id, Department::name));
 
-        return freeBedsByDepartmentAndWard.entrySet().stream()
+        Map<String, List<Ward>> wardsByDepartment = wards.stream()
+                .collect(Collectors.groupingBy(ward -> departmentIdToNameMap.get(ward.departmentId())));
+
+        return wardsByDepartment.entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
-                    int departmentCapacity = wards.stream().filter(ward -> ward.departmentId().equals(entry.getKey())).mapToInt(Ward::capacity).sum();
-                    int departmentTaken = departmentCapacity - entry.getValue().values().stream().mapToInt(Integer::intValue).sum();
-                    double occupancyRate = ((double) departmentTaken / departmentCapacity) * 100;
-                    return new DepartmentsOccupancyStats(entry.getValue(), occupancyRate);
+                    List<Ward> departmentWards = entry.getValue();
+                    int totalCapacity = departmentWards.stream().mapToInt(Ward::capacity).sum();
+                    int totalTaken = departmentWards.stream()
+                            .mapToInt(ward -> {
+                                Integer count = treatmentsRepository.countTreatmentsInWardOnDate(ward.id(), date);
+                                return count != null ? count : 0;
+                            }).sum();
+                    double occupancyRate = ((double) totalTaken / totalCapacity) * 100;
+                    Map<String, Integer> wardFree = departmentWards.stream()
+                            .collect(Collectors.toMap(Ward::name, ward -> {
+                                Integer treatments = treatmentsRepository.countTreatmentsInWardOnDate(ward.id(), date);
+                                treatments = (treatments == null) ? 0 : treatments;
+                                return ward.capacity() - treatments;
+                            }));
+                    return new DepartmentsOccupancyStats(occupancyRate, wardFree);
                 }));
     }
 
-    public record DepartmentsOccupancyStats(Map<Integer, Integer> freeByWard, double occupancyRate) {
+    public record DepartmentsOccupancyStats(double occupancyRate, Map<String, Integer> freeByWard) {
     }
 }

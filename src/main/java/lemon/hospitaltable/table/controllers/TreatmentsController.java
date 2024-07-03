@@ -1,6 +1,7 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.TreatmentRequest;
 import lemon.hospitaltable.table.objects.TreatmentStats;
 import lemon.hospitaltable.table.services.TreatmentsService;
 import lombok.AllArgsConstructor;
@@ -11,8 +12,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -24,24 +27,20 @@ public class TreatmentsController {
 
     private final TreatmentsService treatmentsService;
 
-    public record TreatmentRequest(
-            Long patientId,
-            Integer doctorId,
-            Integer wardId,
-            LocalDate dateIn,
-            LocalDate dateOut,
-            String notation
-    ) {
-    }
-
     @PostMapping
-    public void addTreatment(@RequestBody TreatmentRequest treatmentRequest) {
-        treatmentsService.save(treatmentRequest);
+    public ResponseEntity<Treatment> addTreatment(@RequestBody TreatmentRequest treatmentRequest) {
+        Treatment newTreatment = treatmentsService.save(treatmentRequest);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newTreatment.id())
+                .toUri();
+        return ResponseEntity.created(location).body(newTreatment);
     }
 
-    @PostMapping("/{id}/delete")
-    public void deleteById(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         treatmentsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_patient_id")
@@ -67,6 +66,11 @@ public class TreatmentsController {
     @PostMapping("/{id}/change_date_out")
     public void changeDateOutById(@PathVariable Long id, LocalDate newDateOut) {
         treatmentsService.changeDateOutById(id, newDateOut);
+    }
+
+    @PostMapping("/{id}/change_diagnosis")
+    public void changeDiagnosisById(@PathVariable Long id, String newDiagnosis) {
+        treatmentsService.changeDiagnosisById(id, newDiagnosis);
     }
 
     @PostMapping("/{id}/change_notation")

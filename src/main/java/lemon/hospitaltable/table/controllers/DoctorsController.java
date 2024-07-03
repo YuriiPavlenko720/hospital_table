@@ -1,10 +1,14 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Doctor;
+import lemon.hospitaltable.table.objects.DoctorRequest;
 import lemon.hospitaltable.table.services.DoctorsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -16,23 +20,20 @@ public class DoctorsController {
 
     private final DoctorsService doctorsService;
 
-    public record DoctorRequest (
-            String name,
-            LocalDate birth,
-            String position,
-            Integer departmentId,
-            String email
-    ) {
-    }
-
     @PostMapping
-    public void addDoctor(@RequestBody DoctorRequest doctorRequest) {
-        doctorsService.save(doctorRequest);
+    public ResponseEntity<Doctor> addDoctor(@RequestBody DoctorRequest doctorRequest) {
+        Doctor newDoctor = doctorsService.save(doctorRequest);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newDoctor.id())
+                .toUri();
+        return ResponseEntity.created(location).body(newDoctor);
     }
 
-    @PostMapping("/{id}/delete")
-    public void deleteById(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
         doctorsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_name")

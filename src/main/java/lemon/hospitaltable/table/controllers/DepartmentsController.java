@@ -1,10 +1,14 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Department;
+import lemon.hospitaltable.table.objects.DepartmentRequest;
 import lemon.hospitaltable.table.services.DepartmentsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,17 +19,20 @@ public class DepartmentsController {
 
     private final DepartmentsService departmentsService;
 
-    public record DepartmentRequest(String name) {
-    }
-
     @PostMapping
-    public void createDepartment (@RequestBody DepartmentRequest departmentRequest) {
-        departmentsService.save(departmentRequest);
+    public ResponseEntity<Department> createDepartment (@RequestBody DepartmentRequest departmentRequest) {
+        Department newDepartment = departmentsService.save(departmentRequest);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newDepartment.id())
+                .toUri();
+        return ResponseEntity.created(location).body(newDepartment);
     }
 
-    @PostMapping("/{id}/delete")
-    public void deleteById (@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById (@PathVariable Integer id) {
         departmentsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/rename")

@@ -1,10 +1,13 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Ward;
+import lemon.hospitaltable.table.objects.WardRequest;
 import lemon.hospitaltable.table.services.WardsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -17,22 +20,20 @@ public class WardsController {
 
     private final WardsService wardsService;
 
-    public record WardRequest (
-        Integer level,
-        String name,
-        Integer departmentId,
-        Integer capacity
-    ) {
-    }
-
     @PostMapping
-    public void addWard(@RequestBody WardRequest wardRequest) {
-        wardsService.save(wardRequest);
+    public ResponseEntity<Ward> addWard(@RequestBody WardRequest wardRequest) {
+        Ward newWard = wardsService.save(wardRequest);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newWard.id())
+                .toUri();
+        return ResponseEntity.created(location).body(newWard);
     }
 
-    @PostMapping("/{id}/delete")
-    public void deleteById(@PathVariable Integer id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
         wardsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_level")
@@ -76,7 +77,7 @@ public class WardsController {
     }
 
     @GetMapping("/occupancy")
-    public Map<Integer, WardsService.DepartmentsOccupancyStats> getWardsOccupancyStats(
+    public Map<String, WardsService.DepartmentsOccupancyStats> getWardsOccupancyStats(
             @RequestParam("date") LocalDate date) {
         return wardsService.getWardsOccupancyStats(date);
     }

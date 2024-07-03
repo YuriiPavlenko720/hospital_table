@@ -1,7 +1,7 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.controllers.PatientsController;
 import lemon.hospitaltable.table.objects.Patient;
+import lemon.hospitaltable.table.objects.PatientRequest;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.repositories.PatientsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
@@ -21,11 +21,26 @@ public class PatientsService {
     private final TreatmentsRepositoryInterface treatmentsRepository;
 
 
-    public void save(PatientsController.PatientRequest patientRequest) {
-        patientsRepository.save(new Patient(
+    public Patient save(PatientRequest patientRequest) {
+        //checking the same patient existence
+        List<Patient> samePatients = patientsRepository.findByNameAndBirth(
+                patientRequest.name(),
+                patientRequest.birth()
+        );
+        if (!samePatients.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "There is the same patients: " + samePatients + " ."
+            );
+        }
+
+        //saving of the patient
+        return patientsRepository.save(new Patient(
                 null,
                 patientRequest.name(),
                 patientRequest.birth(),
+                patientRequest.sex(),
+                patientRequest.phone(),
+                patientRequest.interests(),
                 patientRequest.address(),
                 patientRequest.email(),
                 patientRequest.status(),
@@ -66,6 +81,27 @@ public class PatientsService {
         Patient patient = patientsRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
         patientsRepository.save(patient.withBirth(newBirth));
+    }
+
+
+    public void changeSexById(Long id, String newSex) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withAddress(newSex));
+    }
+
+
+    public void changePhoneById(Long id, String newPhone) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withAddress(newPhone));
+    }
+
+
+    public void changeInterestsById(Long id, String newInterests) {
+        Patient patient = patientsRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Patient ID " + id + " not found."));
+        patientsRepository.save(patient.withAddress(newInterests));
     }
 
 

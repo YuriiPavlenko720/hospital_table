@@ -11,8 +11,13 @@ public record Doctor (
         @Id Integer id,
         @With String name,
         @With LocalDate birth,
+        @With String sex,
+        @With String address,
+        @With String phone,
+        @With String interests,
         @With String position,
         @With @Column("department_id") Integer departmentId,
         @With String email
+
 ) {
 }

@@ -1,10 +1,14 @@
 package lemon.hospitaltable.table.controllers;
 
 import lemon.hospitaltable.table.objects.Patient;
+import lemon.hospitaltable.table.objects.PatientRequest;
 import lemon.hospitaltable.table.services.PatientsService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -16,24 +20,20 @@ public class PatientsController {
 
     private final PatientsService patientsService;
 
-    public record PatientRequest (
-            String name,
-            LocalDate birth,
-            String address,
-            String email,
-            String status,
-            String notation
-    ) {
-    }
-
     @PostMapping
-    public void addPatient(@RequestBody PatientRequest patientRequest) {
-        patientsService.save(patientRequest);
+    public ResponseEntity<Patient> addPatient(@RequestBody PatientRequest patientRequest) {
+        Patient newPatient = patientsService.save(patientRequest);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(newPatient.id())
+                .toUri();
+        return ResponseEntity.created(location).body(newPatient);
     }
 
-    @PostMapping("/{id}/delete")
-    public void deleteById(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         patientsService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_name")

@@ -1,6 +1,5 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.controllers.DepartmentsController;
 import lemon.hospitaltable.table.objects.*;
 import lemon.hospitaltable.table.repositories.*;
 import lombok.AllArgsConstructor;
@@ -18,8 +17,8 @@ public class DepartmentsService {
     private final DoctorsRepositoryInterface doctorsRepository;
     private final WardsRepositoryInterface wardsRepository;
 
-    public void save(DepartmentsController.DepartmentRequest departmentRequest) {
-        departmentsRepository.save(new Department(null, departmentRequest.name()));
+    public Department save(DepartmentRequest departmentRequest) {
+        return departmentsRepository.save(new Department(null, departmentRequest.name()));
     }
 
     public void deleteById(Integer id) {
