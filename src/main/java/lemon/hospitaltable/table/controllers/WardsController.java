@@ -4,6 +4,8 @@ import lemon.hospitaltable.table.objects.Ward;
 import lemon.hospitaltable.table.objects.WardRequest;
 import lemon.hospitaltable.table.services.WardsService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -76,9 +78,25 @@ public class WardsController {
         }
     }
 
-    @GetMapping("/occupancy")
+    @GetMapping("/wards_occupancy")
     public Map<String, WardsService.DepartmentsOccupancyStats> getWardsOccupancyStats(
-            @RequestParam("date") LocalDate date) {
+            @RequestParam("date") LocalDate date
+    ) {
         return wardsService.getWardsOccupancyStats(date);
+    }
+
+    @GetMapping("/wards_availability")
+    public ResponseEntity<String> getWardsAvailabilityStats(
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate) {
+        String csvContent = wardsService.getWardsAvailabilityStats(startDate, endDate);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=wards_availability.csv");
+        headers.setContentType(MediaType.TEXT_PLAIN);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(csvContent);
     }
 }

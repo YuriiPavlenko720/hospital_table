@@ -4,10 +4,11 @@ import lemon.hospitaltable.table.objects.Doctor;
 import lemon.hospitaltable.table.objects.DoctorRequest;
 import lemon.hospitaltable.table.services.DoctorsService;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
@@ -79,6 +80,19 @@ public class DoctorsController {
         } else {
             return ResponseEntity.ok(doctors);
         }
+    }
+
+    @GetMapping("/doctor_occupancy")
+    public ResponseEntity<String> getDoctorsOccupancyStats(
+            @RequestParam("startDate") LocalDate startDate,
+            @RequestParam("endDate") LocalDate endDate) {
+        String csvContent = doctorsService.getDoctorsOccupancyStats(startDate, endDate);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=doctors_occupancy.csv");
+        headers.setContentType(MediaType.TEXT_PLAIN);
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(csvContent);
     }
 }
 

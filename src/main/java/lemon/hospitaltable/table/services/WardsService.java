@@ -8,8 +8,12 @@ import lemon.hospitaltable.table.repositories.DepartmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.WardsRepositoryInterface;
 import lombok.AllArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -194,5 +198,45 @@ public class WardsService {
     }
 
     public record DepartmentsOccupancyStats(double occupancyRate, Map<String, Integer> freeByWard) {
+    }
+
+
+    @Transactional
+    public String getWardsAvailabilityStats(LocalDate startDate, LocalDate endDate) {
+        List<Ward> wards = (List<Ward>) wardsRepository.findAll();
+        List<Department> departments = (List<Department>) departmentsRepository.findAll();
+
+        Map<Integer, String> departmentIdToNameMap = departments.stream()
+                .collect(Collectors.toMap(Department::id, Department::name));
+
+        List<LocalDate> dates = startDate.datesUntil(endDate.plusDays(1)).toList();
+
+        StringWriter writer = new StringWriter();
+        try (CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
+            // Header
+            csvPrinter.print("Department");
+            csvPrinter.print("Ward");
+            for (LocalDate date : dates) {
+                csvPrinter.print(date.toString());
+            }
+            csvPrinter.println();
+
+            // Data rows
+            for (Ward ward : wards) {
+                String departmentName = departmentIdToNameMap.get(ward.departmentId());
+                csvPrinter.print(departmentName);
+                csvPrinter.print(ward.name());
+                for (LocalDate date : dates) {
+                    Integer taken = treatmentsRepository.countTreatmentsInWardOnDate(ward.id(), date);
+                    taken = (taken == null) ? 0 : taken;
+                    int free = ward.capacity() - taken;
+                    csvPrinter.print(free);
+                }
+                csvPrinter.println();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return writer.toString();
     }
 }

@@ -46,6 +46,19 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
 
     @Query("""
             SELECT
+                COUNT(*)
+            FROM
+                treatments
+            WHERE
+                    doctor_id = :doctorId
+                AND
+                    (date_in <= :date AND date_out >= :date)
+            """)
+    Long countTreatmentsByDateAndDoctor(LocalDate date, Integer doctorId);
+
+
+    @Query("""
+            SELECT
                 wards.department_id AS departmentId,
                 COUNT(*) AS count
             FROM

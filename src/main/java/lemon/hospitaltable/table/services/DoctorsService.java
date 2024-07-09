@@ -1,16 +1,19 @@
 package lemon.hospitaltable.table.services;
 
-import lemon.hospitaltable.table.objects.Department;
-import lemon.hospitaltable.table.objects.Doctor;
-import lemon.hospitaltable.table.objects.DoctorRequest;
-import lemon.hospitaltable.table.objects.Treatment;
+import lemon.hospitaltable.table.objects.*;
 import lemon.hospitaltable.table.repositories.DepartmentsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lemon.hospitaltable.table.repositories.TreatmentsRepositoryInterface;
 import lombok.AllArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.io.IOException;
+import java.io.StringWriter;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -135,6 +138,44 @@ public class DoctorsService {
             return StreamSupport.stream(doctorsRepository.findAll().spliterator(), false)
                     .collect(Collectors.toList());
         }
+    }
+
+
+    @Transactional
+    public String getDoctorsOccupancyStats(LocalDate startDate, LocalDate endDate) {
+        List<Doctor> doctors = (List<Doctor>) doctorsRepository.findAll();
+        List<Department> departments = (List<Department>) departmentsRepository.findAll();
+        Map<Integer, String> departmentIdToNameMap = departments.stream()
+                .collect(Collectors.toMap(Department::id, Department::name));
+        List<LocalDate> dates = startDate.datesUntil(endDate.plusDays(1)).toList();
+
+        StringWriter writer = new StringWriter();
+
+        try (CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT)) {
+            // Header
+            csvPrinter.print("Department");
+            csvPrinter.print("Doctor");
+            for (LocalDate date : dates) {
+                csvPrinter.print(date.toString());
+            }
+            csvPrinter.println();
+
+            // Data rows
+            for (Doctor doctor : doctors) {
+                String departmentName = departmentIdToNameMap.get(doctor.departmentId());
+                csvPrinter.print(departmentName);
+                csvPrinter.print(doctor.name());
+                for (LocalDate date : dates) {
+                    Long numberOfTreatments = treatmentsRepository.countTreatmentsByDateAndDoctor(date, doctor.id());
+                    numberOfTreatments = (numberOfTreatments == null) ? 0 : numberOfTreatments;
+                    csvPrinter.print(numberOfTreatments);
+                }
+                csvPrinter.println();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return writer.toString();
     }
 }
 
