@@ -6,9 +6,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class RunCheckController {
 
-    @GetMapping("/api/check")
-    public String runCheckStatus() {
-        return "App is running!";
+    @GetMapping("/")
+    public String test() {
+        return "The hospital table is running!";
+    }
+
+    @GetMapping("/auth_test")
+    public String authTest() {
+        return "The hospital table is running! This is an endpoint accessible by only authenticated users.";
     }
 }
-
