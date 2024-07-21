@@ -1,21 +1,18 @@
 package lemon.hospitaltable.table.controllers;
 
-import lemon.hospitaltable.table.services.AIService;
+import lemon.hospitaltable.table.services.OpenAiIntegrationService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @AllArgsConstructor
 @RestController
 @RequestMapping("/api/ai")
 public class AIController {
 
-    private final AIService aiService;
+    private final OpenAiIntegrationService openAiIntegrationService;
 
-    @PostMapping("/recommend_doctor")
-    public String recommendDoctor(@RequestParam Long patientId, @RequestParam String symptoms) {
-        return aiService.recommendDoctor(patientId, symptoms);
+    @GetMapping("/recommend_doctor")
+    public String getRecommendation(@RequestParam Long patientId, @RequestParam String symptoms) {
+        return openAiIntegrationService.getRecommendation(patientId, symptoms);
     }
 }
