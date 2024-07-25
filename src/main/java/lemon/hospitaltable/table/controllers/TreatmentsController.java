@@ -11,6 +11,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.io.IOException;
@@ -28,6 +29,7 @@ public class TreatmentsController {
     private final TreatmentsService treatmentsService;
 
     @PostMapping
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public ResponseEntity<Treatment> addTreatment(@RequestBody TreatmentRequest treatmentRequest) {
         Treatment newTreatment = treatmentsService.save(treatmentRequest);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -38,47 +40,56 @@ public class TreatmentsController {
     }
 
     @DeleteMapping("/{id}")
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         treatmentsService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_patient_id")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changePatientIdById(@PathVariable Long id, Long newPatientId) {
         treatmentsService.changePatientIdById(id, newPatientId);
     }
 
     @PostMapping("/{id}/change_doctor_id")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeDoctorIdById(@PathVariable Long id, Integer newDoctorId) {
         treatmentsService.changeDoctorIdById(id, newDoctorId);
     }
 
     @PostMapping("/{id}/change_ward_id")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeWardIdById(@PathVariable Long id, Integer newWardId) {
         treatmentsService.changeWardIdById(id, newWardId);
     }
 
     @PostMapping("/{id}/change_date_in")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeDateInById(@PathVariable Long id, LocalDate newDateIn) {
         treatmentsService.changeDateInById(id, newDateIn);
     }
 
     @PostMapping("/{id}/change_date_out")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeDateOutById(@PathVariable Long id, LocalDate newDateOut) {
         treatmentsService.changeDateOutById(id, newDateOut);
     }
 
     @PostMapping("/{id}/change_diagnosis")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeDiagnosisById(@PathVariable Long id, String newDiagnosis) {
         treatmentsService.changeDiagnosisById(id, newDiagnosis);
     }
 
     @PostMapping("/{id}/change_notation")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeNotationById(@PathVariable Long id, String newNotation) {
         treatmentsService.changeNotationById(id, newNotation);
     }
 
     @GetMapping("/stats")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public ResponseEntity<ByteArrayResource> getTreatmentsStats(
             @RequestParam("startDate") LocalDate startDate,
             @RequestParam("endDate") LocalDate endDate
@@ -109,6 +120,7 @@ public class TreatmentsController {
     }
 
     @GetMapping("/stats_by_doctor")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public ResponseEntity<ByteArrayResource> countTreatmentsStatsByDoctorId(
             @RequestParam("doctorId") Integer doctorId,
             @RequestParam("startDate") LocalDate startDate,
@@ -140,6 +152,7 @@ public class TreatmentsController {
     }
 
     @GetMapping("/stats_by_department")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public ResponseEntity<ByteArrayResource> countTreatmentsStatsByDepartmentId(
             @RequestParam("departmentId") Integer departmentId,
             @RequestParam("startDate") LocalDate startDate,
@@ -171,11 +184,13 @@ public class TreatmentsController {
     }
 
     @GetMapping("/{id}")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER"})
     public Optional<Treatment> getTreatment(@PathVariable Long id) {
         return treatmentsService.findById(id);
     }
 
     @GetMapping("/find")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_USER"})
     public ResponseEntity<?> findTreatments(
             @RequestParam(required = false) Long patientId,
             @RequestParam(required = false) Integer doctorId,

@@ -1,4 +1,4 @@
-package lemon.hospitaltable.table.objects;
+package lemon.hospitaltable.table.objects.security;
 
 import lombok.With;
 import org.springframework.data.annotation.Id;

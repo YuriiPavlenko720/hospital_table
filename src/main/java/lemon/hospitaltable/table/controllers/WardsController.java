@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
@@ -23,6 +24,7 @@ public class WardsController {
     private final WardsService wardsService;
 
     @PostMapping
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<Ward> addWard(@RequestBody WardRequest wardRequest) {
         Ward newWard = wardsService.save(wardRequest);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -33,37 +35,44 @@ public class WardsController {
     }
 
     @DeleteMapping("/{id}")
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<Void> deleteById(@PathVariable Integer id) {
         wardsService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_level")
+    @Secured({"ROLE_ADMIN"})
     public void changeLevelById(@PathVariable Integer id, Integer newLevel) {
         wardsService.changeLevelById(id, newLevel);
     }
 
     @PostMapping("/{id}/change_name")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void renameById(@PathVariable Integer id, String newName) {
         wardsService.renameById(id, newName);
     }
 
     @PostMapping("/{id}/change_department")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeDepartmentById(@PathVariable Integer id, Integer newDepartmentId) {
         wardsService.changeDepartmentById(id, newDepartmentId);
     }
 
     @PostMapping("/{id}/change_capacity")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void changeCapacityById(@PathVariable Integer id, Integer newCapacity) {
         wardsService.changeCapacityById(id, newCapacity);
     }
 
     @GetMapping("/{id}")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public Optional<Ward> getWard(@PathVariable Integer id) {
         return wardsService.findById(id);
     }
 
     @GetMapping("/find")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public ResponseEntity<?> findWards(
             @RequestParam(required = false) Integer level,
             @RequestParam(required = false) String name,
@@ -79,6 +88,7 @@ public class WardsController {
     }
 
     @GetMapping("/wards_occupancy")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public Map<String, WardsService.DepartmentsOccupancyStats> getWardsOccupancyStats(
             @RequestParam("date") LocalDate date
     ) {
@@ -86,6 +96,7 @@ public class WardsController {
     }
 
     @GetMapping("/wards_availability")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public ResponseEntity<String> getWardsAvailabilityStats(
             @RequestParam("startDate") LocalDate startDate,
             @RequestParam("endDate") LocalDate endDate) {

@@ -117,4 +117,4 @@ CREATE TABLE `users`
   COLLATE = utf8mb4_0900_ai_ci;
 
 INSERT INTO users (username, email, role_id)
-VALUES ('admin', 'pavlenko.istobud@gmail.com', 1);
+VALUES ('admin', 'ok.net.set@gmail.com', 1);
