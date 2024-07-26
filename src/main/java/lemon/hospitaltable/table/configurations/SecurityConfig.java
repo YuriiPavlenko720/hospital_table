@@ -43,6 +43,9 @@ public class SecurityConfig {
                                 .oidcUserService(this.oidcUserService())
                         )
                 )
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/**")  // Disable CSRF check
+                )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .accessDeniedHandler(accessDeniedHandler())
                 );
