@@ -51,7 +51,7 @@ public class PatientGenerator {
     );
 
     public static void main(String[] args) {
-        int numberOfPatients = 20; // Number of patients for generation
+        int numberOfPatients = 2000; // Number of patients for generation
         String startDate = "1946-02-03";
         String endDate = "2004-07-09";
         int minInterests = 0; // Min number of interests
@@ -98,7 +98,7 @@ public class PatientGenerator {
             sql.append(String.format(
                     "('%s', '%s', '%s', NULL, '%s', '%s', NULL, 'new', NULL)", name, birth, gender, interests, address)
             );
-            sql.append(",\n");
+            //sql.append(",\n");
 
             usedEntries.add(entry);
             patientsGenerated++;
@@ -111,7 +111,7 @@ public class PatientGenerator {
         sql.append(";");
 
         // Write SQL query to file
-        String sqlFileName = "src/main/java/lemon/hospitaltable/generators/insert_treatments.sql";
+        String sqlFileName = "src/main/java/lemon/hospitaltable/generators/insert_patients.sql";
         try (FileWriter fileWriter = new FileWriter(sqlFileName)) {
             fileWriter.write(sql.toString());
             System.out.println("SQL statements written to " + sqlFileName);

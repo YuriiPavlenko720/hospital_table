@@ -12,32 +12,32 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class TreatmentGenerator {
     private static final String[] DIAGNOSES = {
-//            "Fracture", "Sprain", "Arthritis", "Dislocation", "Osteoporosis",                //Orthopedics
-//            "Scoliosis", "Tendinitis", "Bursitis", "Ligament", "Meniscus"                    //Orthopedics
-//            "Angina", "Arrhythmia", "Cardiomyopathy", "Hypertension", "Atherosclerosis",     //Cardiology
-//            "Myocarditis", "Endocarditis", "Tachycardia", "Bradycardia", "Pericarditis"      //Cardiology
-//            "Appendicitis", "Hernia", "Cholecystitis", "Abscess", "Ulcer",                   //Surgery
-//            "Diverticulitis", "Hemorrhoids", "Fistula", "Trauma", "Tumor"                    //Surgery
+            "Fracture", "Sprain", "Arthritis", "Dislocation", "Osteoporosis",                //Orthopedics
+            "Scoliosis", "Tendinitis", "Bursitis", "Ligament", "Meniscus",                    //Orthopedics
+            "Angina", "Arrhythmia", "Cardiomyopathy", "Hypertension", "Atherosclerosis",     //Cardiology
+            "Myocarditis", "Endocarditis", "Tachycardia", "Bradycardia", "Pericarditis",      //Cardiology
+            "Appendicitis", "Hernia", "Cholecystitis", "Abscess", "Ulcer",                   //Surgery
+            "Diverticulitis", "Hemorrhoids", "Fistula", "Trauma", "Tumor",                    //Surgery
             "Epilepsy", "Migraine", "Stroke", "Meningitis", "Encephalitis",                    //Neurology
             "Neuropathy", "Parkinsonism", "Dementia", "Myelopathy", "Neuralgia"                //Neurology
     };
 
     public static void main(String[] args) {
         // Define constants for the range of patient IDs
-        int patientIdStart = 1607;
-        int patientIdFinish = 2106;
+        int patientIdStart = 1;
+        int patientIdFinish = 2000;
 
         // Define arrays for doctor IDs and ward IDs
-        int[] doctorsIDs = {5, 9, 13};
-        int[] wardsIDs = {12, 13, 14};
+        int[] doctorsIDs = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13};
+        int[] wardsIDs = {3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
 
         // Define dates of beginning treatments
-        String startDate = "2024-01-02";
-        String endDate = "2024-11-19";
+        String startDate = "2023-12-20";
+        String endDate = "2024-12-20";
 
         // Define durations of treatments
-        int minDays = 8;
-        int maxDays = 38;
+        int minDays = 3;
+        int maxDays = 33;
 
         String sqlFileName = "src/main/java/lemon/hospitaltable/generators/insert_treatments.sql";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");

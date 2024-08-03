@@ -1,9 +1,12 @@
 package lemon.hospitaltable.table.services;
 
+import lemon.hospitaltable.table.controllers.RunCheckController;
 import lemon.hospitaltable.table.objects.Doctor;
 import lemon.hospitaltable.table.objects.Treatment;
 import lemon.hospitaltable.table.repositories.DoctorsRepositoryInterface;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -13,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class NotificationService {
     private final JavaMailSender mailSender;
     private final DoctorsRepositoryInterface doctorsRepository;
+    private static final Logger logger = LoggerFactory.getLogger(RunCheckController.class);
 
     public void sendEmail(Treatment treatment, String subject, String text) {
 
@@ -34,6 +38,7 @@ public class NotificationService {
             message.setText(text);
         }
         message.setFrom("ok.net.set@gmail.com");
+        logger.info("Mail is sent");
         mailSender.send(message);
     }
 }

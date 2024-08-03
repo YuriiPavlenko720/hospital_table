@@ -1,11 +1,14 @@
 package lemon.hospitaltable.table.configurations;
 
 import jakarta.servlet.http.HttpServletResponse;
+import lemon.hospitaltable.table.controllers.RunCheckController;
 import lemon.hospitaltable.table.objects.security.Role;
 import lemon.hospitaltable.table.objects.security.User;
 import lemon.hospitaltable.table.repositories.RolesRepositoryInterface;
 import lemon.hospitaltable.table.repositories.UsersRepositoryInterface;
 import lombok.AllArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -30,6 +33,7 @@ import java.util.Set;
 public class SecurityConfig {
     private final UsersRepositoryInterface usersRepository;
     private final RolesRepositoryInterface rolesRepository;
+    private static final Logger logger = LoggerFactory.getLogger(RunCheckController.class);
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -44,7 +48,7 @@ public class SecurityConfig {
                         )
                 )
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/**")  // Disable CSRF check
+                        .ignoringRequestMatchers("/**", "/h2-console/**", "/flyway/**")  // Disable CSRF check
                 )
                 .exceptionHandling(exceptionHandling -> exceptionHandling
                         .accessDeniedHandler(accessDeniedHandler())
@@ -65,9 +69,11 @@ public class SecurityConfig {
 
                 if (user.isPresent()) {
                     Role role = rolesRepository.findById(user.get().roleId()).orElseThrow();
+                    logger.info("User get the role ROLE_{}", role.name());
                     mappedAuthorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_" + role.name()));
                 } else {
                     // If the user is not found in the database, give him minimum authority (GUEST)
+                    logger.info("User get the role ROLE_GUEST");
                     mappedAuthorities = Collections.singleton(new SimpleGrantedAuthority("ROLE_GUEST"));
                 }
 
@@ -79,6 +85,7 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
+            logger.info("User`s access denied");
             response.setContentType("text/html");
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.getWriter().write(

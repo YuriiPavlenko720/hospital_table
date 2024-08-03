@@ -1,18 +1,9 @@
 version: '3.8'
 services:
-#  app:
-#    build: .
-#    restart: always
-#    depends_on:
-#      - db
-#    ports:
-#      - "8081:8080"
   db:
-    image: mysql:latest
+    image: mysql:8.0
     environment:
       MYSQL_DATABASE: hospital_01
-#      MYSQL_USER: root
-#      MYSQL_PASSWORD: 0000
       MYSQL_ROOT_PASSWORD: f1a1dd0e4c1f
     ports:
       - "3307:3306"
