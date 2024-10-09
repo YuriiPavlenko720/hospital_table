@@ -7,6 +7,7 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment, Long> {
 
@@ -19,6 +20,7 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
                     patient_id = :patientId
                 AND
                     ((date_in <= :dateOut AND date_out >= :dateIn) AND id != :id)
+            ORDER BY treatments.date_in ASC
             """)
     List<Treatment> findOvertreatmentsByPatientId(
             @Param("patientId") Long patientId,
@@ -69,6 +71,7 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
             WHERE
                 treatments.date_out BETWEEN :startDate AND :endDate
             GROUP BY wards.department_id
+            ORDER BY treatments.date_out ASC
             """)
     List<TreatmentStats> findAllTreatmentsEndingBetweenByDepartments(
             LocalDate startDate,
@@ -127,9 +130,9 @@ public interface TreatmentsRepositoryInterface extends CrudRepository<Treatment,
 
     List<Treatment> findByPatientId(Long patientId);
 
-
     List<Treatment> findByDoctorId(Integer doctorId);
 
+    Optional<Treatment> findByPatientIdAndDoctorId(Long patientId, Integer doctorId);
 
     List<Treatment> findByWardId(Integer wardId);
 }

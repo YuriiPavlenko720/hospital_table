@@ -22,10 +22,12 @@ public class UsersService {
 
     public User save(UserRequest userRequest) {
 
-        //checking existence of a user with the given email
-        Optional<User> existingUser = usersRepository.findByEmail(userRequest.email());
+        //checking existence of a user with the given email and role
+        Optional<User> existingUser = usersRepository.findByEmailAndRoleId(userRequest.email(), userRequest.roleId());
         if (existingUser.isPresent()) {
-            throw new IllegalArgumentException("A user with email " + userRequest.email() + " already exists.");
+            throw new IllegalArgumentException(
+                    "A user with email " + userRequest.email() + " and role " + userRequest.roleId() + " already exists."
+            );
         }
 
         //checking role existence
@@ -72,10 +74,12 @@ public class UsersService {
         User user = usersRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User ID " + id + " not found."));
 
-        //checking existence of a user with the given email
-        Optional<User> existingUser = usersRepository.findByEmail(newEmail);
+        //checking existence of a user with the given email and role
+        Optional<User> existingUser = usersRepository.findByEmailAndRoleId(newEmail, user.roleId());
         if (existingUser.isPresent()) {
-            throw new IllegalArgumentException("A user with email " + newEmail + " already exists.");
+            throw new IllegalArgumentException(
+                    "A user with email " + newEmail + " and role " + user.roleId() + " already exists."
+            );
         }
 
         //saving user with new email
@@ -91,6 +95,14 @@ public class UsersService {
         //checking role existence
         Role role = rolesRepository.findById(newRoleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role ID " + newRoleId + " not found."));
+
+        //checking existence of a user with the email and given role
+        Optional<User> existingUser = usersRepository.findByEmailAndRoleId(user.email(), newRoleId);
+        if (existingUser.isPresent()) {
+            throw new IllegalArgumentException(
+                    "A user with email " + user.email() + " and role " + newRoleId + " already exists."
+            );
+        }
 
         //checking if the user is the last ADMIN
         if (user.roleId() == 1) {

@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,14 +32,14 @@ public class PatientsController {
     }
 
     @DeleteMapping("/{id}")
-    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
+    @Secured({"ROLE_ADMIN"})
     public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         patientsService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{id}/change_name")
-    @Secured({"ROLE_ADMIN"})
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
     public void renameById(@PathVariable Long id, String newName) {
         patientsService.renameById(id, newName);
     }
@@ -51,14 +50,32 @@ public class PatientsController {
         patientsService.changeBirthById(id, newBirth);
     }
 
+    @PostMapping("/{id}/change_sex")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_PATIENT"})
+    public void changeSexById(@PathVariable Long id, String newSex) {
+        patientsService.changeSexById(id, newSex);
+    }
+
+    @PostMapping("/{id}/change_phone")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_PATIENT"})
+    public void changePhoneById(@PathVariable Long id, String newPhone) {
+        patientsService.changePhoneById(id, newPhone);
+    }
+
+    @PostMapping("/{id}/change_interests")
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_PATIENT"})
+    public void changeInterestsById(@PathVariable Long id, String newInterests) {
+        patientsService.changeInterestsById(id, newInterests);
+    }
+
     @PostMapping("/{id}/change_address")
-    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_PATIENT"})
     public void changeAddressById(@PathVariable Long id, String newAddress) {
         patientsService.changeAddressById(id, newAddress);
     }
 
     @PostMapping("/{id}/change_email")
-    @Secured({"ROLE_ADMIN", "ROLE_MANAGER"})
+    @Secured({"ROLE_ADMIN", "ROLE_MANAGER", "ROLE_PATIENT"})
     public void changeEmailById(@PathVariable Long id, String newEmail) {
         patientsService.changeEmailById(id, newEmail);
     }

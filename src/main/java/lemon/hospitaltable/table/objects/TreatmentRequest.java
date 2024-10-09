@@ -1,7 +1,5 @@
 package lemon.hospitaltable.table.objects;
 
-import lombok.With;
-
 import java.time.LocalDate;
 
 public record TreatmentRequest(

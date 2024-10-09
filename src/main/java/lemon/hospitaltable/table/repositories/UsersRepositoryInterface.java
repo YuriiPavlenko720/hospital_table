@@ -13,5 +13,7 @@ public interface UsersRepositoryInterface extends CrudRepository<User, Long> {
 
     List<User> findByRoleId(Short roleId);
 
+    Optional<User> findByEmailAndRoleId(String email, Short roleId);
+
     long countByRoleId(Short roleId);
 }
