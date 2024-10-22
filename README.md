@@ -1,3 +1,12 @@
+Web-application for accounting and organization of treatments in a health care facility.
+
+Applied:
+Java 21
+SpringBoot 3.2.5
+MySQL
+Gradle 8.7
+Docker Compose
+
 1) Use DockerCompose for connection to the database. Docker settings see in compose.yaml.
 2) Configure mail messages to doctors in src.main.resources.application.properties by entering the data of the required mail service for sending messages.
 3) If necessary, change the spring.datasource database access data in src.main.resources.application.properties.
