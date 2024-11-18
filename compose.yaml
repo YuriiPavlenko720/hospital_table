@@ -7,3 +7,20 @@ services:
       MYSQL_ROOT_PASSWORD: f1a1dd0e4c1f
     ports:
       - "3307:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  app:
+    build:
+      context: .
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/hospital_01
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: f1a1dd0e4c1f
+    depends_on:
+      - db
+    ports:
+      - "8081:8080"
