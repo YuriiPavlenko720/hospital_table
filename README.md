@@ -3,9 +3,14 @@ Web-application for accounting and organization of treatments in a health care f
 Applied:
 - Java 21
 - SpringBoot 3.2.5
+- spring.data.jdbc
 - MySQL
 - Gradle 8.7
 - Docker Compose
+- flyway
+- oauth2
+- openai.api
+- spring.mail
 
 For starting:
 1) Use DockerCompose for connection to the database. Docker settings see in compose.yaml.
@@ -17,7 +22,7 @@ For starting:
    spring.security.oauth2.client.registration.google.client-id=...
    spring.security.oauth2.client.registration.google.client-secret=...
    prompt.recommendation-request-message="... ${patient} ... ${symptoms} ... ${doctors} ... ".
-5) The application by default creates a test database with randomly generated in advance: 5 departments, 13 doctors, 14 wards, 2000 patients and 2000 treatments. If you need to add a certain number of random patients and treatments, use the generators in the "main.java.lemon.hospitaltable.generators" folder by entering the required values ​​in the variables (number, dates, names, diagnoses, etc.). Add the generated sql queries (generated in the same folder with the names insert_patients.sql and insert_treatments.sql) to "main.resources.db.migration" in the following versions, changing the names according to firefly regulations. Attention, treatment is generted without taking into account the capacity of the wards.
+5) The application by default creates a test database with randomly generated in advance: 5 departments, 13 doctors, 14 wards, 2000 patients and 2000 treatments. If you need to add a certain number of random patients and treatments, use the generators in the "main.java.lemon.hospitaltable.generators" folder by entering the required values ​​in the variables (number, dates, names, diagnoses, etc.). Add the generated sql queries (generated in the same folder with the names insert_patients.sql and insert_treatments.sql) to "main.resources.db.migration" in the following versions, changing the names according to flyway regulations. Attention, treatment is generted without taking into account the capacity of the wards.
 6) Starting application is at the src.main.java.lemon.hospitaltable.table.TableApplication.
 
 
