@@ -30,7 +30,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and test with Gradle (excluding specific test)
-        run: ./gradlew test --exclude-task "src.test.java.lemon.hospitaltable.table.TableApplicationTests"
+        run: ./gradlew test --tests '!lemon.hospitaltable.table.TableApplicationTests'
 
   docker-build-push:
     runs-on: ubuntu-latest
