@@ -29,8 +29,8 @@ jobs:
         if: runner.os != 'Windows'
         run: chmod +x gradlew
 
-      - name: Build and test with Gradle (excluding specific test)
-        run: ./gradlew test -x test --exclude-task testClasses --exclude-test-class=lemon.hospitaltable.table.TableApplicationTests
+      - name: Build and test with Gradle
+        run: ./gradlew test
 
   docker-build-push:
     runs-on: ubuntu-latest

@@ -57,13 +57,11 @@ flyway {
 
 tasks.named('test') {
 	useJUnitPlatform()
-	exclude '**/TableApplicationTests.class'
 }
 
 tasks.withType(Test).configureEach {
-	useJUnitPlatform {
-		excludeTags 'exclude-from-ci'
-	}
+	useJUnitPlatform()
+	exclude '**/TableApplicationTests.class'
 }
 
 
