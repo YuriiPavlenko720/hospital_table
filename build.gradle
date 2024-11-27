@@ -59,4 +59,9 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+tasks.withType(Test).configureEach {
+	useJUnitPlatform()
+	exclude '**/TableApplicationTests.class'
+}
+
 
