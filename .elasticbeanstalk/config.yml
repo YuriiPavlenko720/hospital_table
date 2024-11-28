@@ -1,6 +1,6 @@
 branch-defaults:
   master-hospital:
-    environment: hospital-env8
+    environment: hospital-env10
 global:
   application_name: hospitaltable
   branch: null
